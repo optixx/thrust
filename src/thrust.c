@@ -7,8 +7,6 @@
 
 #include <unistd.h>
 #include <getopt.h>
-
-#define __USE_BSD
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

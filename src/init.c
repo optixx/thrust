@@ -5,7 +5,6 @@
 #include "config.h"
 #endif
 
-#define __USE_BSD
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,7 +13,6 @@
 #else
 #include <malloc.h>
 #endif
-#define __USE_BSD
 #include <math.h>
 
 #include "thrust_t.h"

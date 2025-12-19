@@ -19,7 +19,6 @@
 # endif
 #endif
 
-#define __USE_BSD
 #include <stdlib.h>
 #include <math.h>
 

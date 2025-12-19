@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <stdlib.h>
 #include <assert.h>
-#define __USE_BSD
 #include <unistd.h>
 #include <sys/time.h>
 
