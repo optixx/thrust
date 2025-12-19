@@ -28,7 +28,7 @@ HIGHSCORE    = thrust.highscore
 FULLHISCORE  = $(STATEDIR)/$(HIGHSCORE)
 VERSION_NR   = 0.89
 VERSION      = 0.89c
-HELPPRG      = $(addprefix helpers/, bin2c txt2c ppm2c reverse)
+HELPPRG      = $(addprefix helpers/, bin2c txt2c reverse)
 BIN8         = $(addprefix datasrc/, \
                  blks0.bin blks1.bin blks2.bin blks3.bin \
                  blks4.bin blks5.bin blks6.bin blks7.bin \
@@ -44,9 +44,6 @@ ALL_CFLAGS   = $(strip $(DEFINES) $(CFLAGS) $(SDL_CFLAGS))
 HELP_CFLAGS  = -DHAVE_CONFIG_H $(CFLAGS)
 LDFLAGS      =
 LIBS         = -lm
-
-NO_PBM       = yes
-PBM_FLAGS    =   -lppm -lpgm -lpbm -DVERSION="0.6"
 
 SOURCEOBJS   = $(addprefix src/, \
                  thrust.o fast_gr.o hiscore.o conf.o things.o init.o \
@@ -94,9 +91,6 @@ helpers/bin2c: helpers/bin2c.c
 helpers/txt2c: helpers/txt2c.c
 	$(CC) $(HELP_CFLAGS) $< -o $@
 
-helpers/ppm2c: helpers/ppm2c.c
-	$(CC) $(HELP_CFLAGS) $< $(PBM_FLAGS) -o $@
-
 %.o: %.c
 	$(CC) $(ALL_CFLAGS) -c -o $(addprefix $(dir $<),$(notdir $@)) $<
 
@@ -125,15 +119,6 @@ helpers/ppm2c: helpers/ppm2c.c
 	/bin/echo > $@
 	/bin/echo unsigned int sound_$(notdir $(basename $<))_len = `wc -c < $<`\; >> $@
 	helpers/bin2c sound_$(notdir $(basename $<)) < $< >> $@
-
-ifeq ($(NO_PBM),yes)
-%.c: %.ppm
-	@echo Must configure with pbm to build ppm2c.
-	@echo Warning: Unable to rebuild $@ from $<.
-else
-%.c: %.ppm helpers/ppm2c
-	helpers/ppm2c -n $(notdir $(basename $<)) -m 32 < $< > $@
-endif
 
 ifeq (.depend,$(wildcard .depend))
 include .depend
