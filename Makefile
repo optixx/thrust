@@ -68,11 +68,7 @@ DATAOBJS     = $(addprefix $(ASSET_OBJ_DIR)/, font.o) $(patsubst %.c,%.o,$(addpr
 SOUNDITOBJS  = $(addprefix $(SRC_OBJ_DIR)/, soundIt.o)
 SOUNDOBJS    = $(addprefix $(ASSET_OBJ_DIR)/, \
                  boom.o boom2.o harp.o thrust.o zero.o )
-ifeq ($(SOUND),yes)
 OBJS         = $(SOURCEOBJS) $(DATAOBJS) $(SOUNDITOBJS) $(SOUNDOBJS)
-else
-OBJS         = $(SOURCEOBJS) $(DATAOBJS)
-endif
 SDL_OBJS     = $(addprefix $(SRC_OBJ_DIR)/, SDLkey.o SDL.o )
 ASSET_CS     = $(DATASEC)
 

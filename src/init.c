@@ -25,14 +25,9 @@
 #include "thrust.h"
 #include "graphics.h"
 
-#ifdef HAVE_SOUND
 #include "soundIt.h"
 #define NUM_SAMPLES 5
-#if defined(HAVE_LINUX_SOUND)
-#define SAMPLE_RATE 11000
-#elif defined(HAVE_SUN_SOUND) || defined(HAVE_HP_SOUND)
 #define SAMPLE_RATE 11025
-#endif
 #define NUM_CHANNELS 4
 #define CHAN_1 0
 #define CHAN_2 1
@@ -44,7 +39,6 @@
 #define SND_THRUST 3
 #define SND_ZERO   4
 Sample snd[NUM_SAMPLES];
-#endif
 
 void
 turnship(void)
@@ -157,14 +151,12 @@ initmem(void)
 void
 inithardware(int argc, char **argv)
 {
-#ifdef HAVE_SOUND
   if(play_sound) {
     if(initsoundIt())
       play_sound=0;
     else
       play_sound=1;
   }
-#endif
 
   if(graphicsinit(window_zoom))
     exit(-1);
@@ -285,7 +277,6 @@ initgame(int round, int reset, int xblock, int yblock)
   chflag=0;
 }
 
-#ifdef HAVE_SOUND
 int
 initsoundIt(void)
 {
@@ -308,12 +299,7 @@ initsoundIt(void)
   snd[4].len  = sound_zero_len;
   snd[4].loop = 0;
 
-#if defined(HAVE_LINUX_SOUND)
-  if(Snd_init(NUM_SAMPLES, snd, SAMPLE_RATE, NUM_CHANNELS, "/dev/dsp")
-#elif defined(HAVE_SUN_SOUND) || defined(HAVE_HP_SOUND)
-  if(Snd_init(NUM_SAMPLES, snd, SAMPLE_RATE, NUM_CHANNELS, "/dev/audio")
-#endif
-     == EXIT_FAILURE) {
+  if(Snd_init(NUM_SAMPLES, snd, SAMPLE_RATE, NUM_CHANNELS) == EXIT_FAILURE) {
     printf("No sound.\n");
     return(-1);
   }
@@ -321,16 +307,7 @@ initsoundIt(void)
   printf("done.\n");
   return(0);
 }
-                                                            
-void
-restoresoundIt(void)
-{
-  printf("Restoring sound...");
-  Snd_restore();
-  printf("done.\n");
-}
-#endif
-         
+
 void
 restorehardware(void)
 {
@@ -340,10 +317,8 @@ restorehardware(void)
 
   graphicsclose();
 
-#ifdef HAVE_SOUND
   if(play_sound)
-    restoresoundIt();
-#endif
+    Snd_restore();
 }
 
 void

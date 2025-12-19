@@ -33,11 +33,6 @@
 #define EXIT_SUCCESS 0
 #endif
 
-/* 00002 = 2 fragments   */
-/* 00007 = means each fragment is 2^7 or 128 bytes */
-/* See voxware docs (in /usr/src/linux/drivers/sound) for more info */
-#define FRAG_SPEC 0x00020007
-
 /*==========================================================================*/
 typedef struct {
   byte *data;	/* unsigned 8-bit raw samples */
@@ -60,11 +55,9 @@ Snd_loadRawSample(const char *file, Sample *sample, int loop);
 /* sa       = the sample array						    */
 /* freq     = the rate (Hz) to play back the samples                        */
 /* channels = # of channels to mix                                          */
-/* sound_device = a char string for the sound device, eg, "/dev/dsp"        */
 /* returns: 0=success, -1=failure.*/
 int
-Snd_init(int num_snd, const Sample *sa, int freq, 
-	 int channels, const char *sound_device);
+Snd_init(int num_snd, const Sample *sa, int freq, int channels);
 
 
 /* shutdown sample player, free mem, etc/etc..*/

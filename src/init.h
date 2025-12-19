@@ -14,7 +14,6 @@ void inithardware(int argc, char **argv);
 void initscreen(int round);
 void initgame(int round, int reset, int xblock, int yblock);
 int initsoundIt(void);
-void restoresoundIt(void);
 void restorehardware(void);
 void restoremem(void);
 
