@@ -1,0 +1,7 @@
+# Sample thrust configuration file (key bindings for SDL).
+# Format: <Driver>-<action> <SDL key name>
+SDL-counterclockwise A
+SDL-clockwise D
+SDL-thrust W
+SDL-fire RETURN
+SDL-pickup SPACE

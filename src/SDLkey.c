@@ -41,17 +41,17 @@ keyclose(void)
 char *
 keystring(int key)
 {
-  const char *name = SDL_GetScancodeName((SDL_Scancode)key);
+  const char *name = SDL_GetKeyName((SDL_Keycode)key);
   return (char *)(name && *name ? name : "unknown");
 }
 
 int
 keycode(char *keyname)
 {
-  SDL_Scancode sc = SDL_GetScancodeFromName(keyname);
-  if(sc == SDL_SCANCODE_UNKNOWN)
+  SDL_Keycode kc = SDL_GetKeyFromName(keyname);
+  if(kc == SDLK_UNKNOWN)
     return 0;
-  return (int)sc;
+  return (int)kc;
 }
 
 int

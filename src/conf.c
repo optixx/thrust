@@ -1,11 +1,12 @@
 
 /* Written by Peter Ekberg, peda@lysator.liu.se */
 
-#include <unistd.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
+#include <ctype.h>
+#include <limits.h>
 
 #include "thrust_t.h"
 #include "keyboard.h"
@@ -127,111 +128,68 @@ conf(void)
 
 void initkeys(void)
 {
-  char *home;
-  char *thrustrc;
+  char path[PATH_MAX];
   char *keyboarddriver;
   FILE *f;
   int rows=0;
   int res;
   char row[256], field[256], value[256], driver[256];
 
-  home=getenv("HOME");
-  if(home==NULL)
-    home = "";
+  snprintf(path, sizeof path, "thrust.rc");
 
-  thrustrc = malloc(strlen(home) + 11);
-  if(thrustrc == NULL) {
-    printf("Out of memory when trying to read .thrustrc.\n");
-    return;
-  }
-
-  strcpy(thrustrc, home);
-#if defined(__DJGPP__) || defined(_WIN32)
-  if(thrustrc[0]) {
-    unsigned int i;
-
-    for(i=0; i<strlen(thrustrc); i++)
-      thrustrc[i] = thrustrc[i]=='/' ? '\\' : thrustrc[i];
-    if(thrustrc[strlen(thrustrc)-1]!='\\')
-      strcat(thrustrc, "\\");
-  }
-  strcat(thrustrc, "thrustrc");
-#else
-  if(thrustrc[0])
-    if(thrustrc[strlen(thrustrc)-1]!='/')
-      strcat(thrustrc, "/");
-  strcat(thrustrc, ".thrustrc");
-#endif
-
-
-  f = fopen(thrustrc, "r");
+  f = fopen(path, "r");
   if(f == NULL) {
-#if defined(_WIN32)
-    strcpy(thurstrc, "thrustrc");
-    f = fopen(thrustrc, "r");
-    if(f == NULL)
-      return;
-#else
+    perror("Opening configuration file");
     return;
-#endif
   }
 
   keyboarddriver = keyname();
+  printf("Loading configuration from %s (keyboard %s)\n", path, keyboarddriver);
 
-  while(!feof(f)) {
+  while(fgets(row, sizeof row, f)) {
+    char *line = row;
+    size_t len = strlen(line);
+
     rows++;
-    if(fgets(row, 255, f) == NULL) {
-      if(ferror(f)) {
-	perror("Error while parsing row %d of \"%s\"\n");
-	break;
-      }
-      else
-	row[0] = '\0';
+    if(len && line[len-1]=='\n')
+      line[--len]='\0';
+
+    while(*line && isspace((unsigned char)*line))
+      line++;
+    if(*line == '\0' || *line == '#')
+      continue;
+
+    res = sscanf(line, "%63[^-]-%63s %63s", driver, field, value);
+    if(res < 3) {
+      printf("Syntax error in row %d of \"%s\".\n", rows, path);
+      continue;
     }
-    if(!feof(f)) {
-      if(row[strlen(row)-1] != '\n') {
-	printf("Row %d of \"%s\" is too long.\n", rows, thrustrc);
-	break;
-      }
-      else
-	row[strlen(row)-1] = '\0';
+
+    if(strcasecmp(driver, keyboarddriver) && strcasecmp(driver, "SDL"))
+      continue;
+
+    int idx = -1;
+    if(!strcasecmp(field, "counterclockwise")) {
+      scancode[0] = keycode(value);
+      idx = 0;
+    } else if(!strcasecmp(field, "clockwise")) {
+      scancode[1] = keycode(value);
+      idx = 1;
+    } else if(!strcasecmp(field, "thrust")) {
+      scancode[2] = keycode(value);
+      idx = 2;
+    } else if(!strcasecmp(field, "fire")) {
+      scancode[3] = keycode(value);
+      idx = 3;
+    } else if(!strcasecmp(field, "pickup")) {
+      scancode[4] = keycode(value);
+      idx = 4;
+    } else {
+      printf("Illegal keyboard field \"%s\" specified in row %d.\n",
+	     field, rows);
     }
-    if(row[0] != '#') {
-      res = sscanf(row, "%[^-]-%s %s", driver, field, value);
-      if(res==2)
-	printf("Syntax error in row %d of \"%s\".\n", rows, thrustrc);
-      else if(res>=3) {
-	if(!strcasecmp(driver, "SVGA")
-	   || !strcasecmp(driver, "X11")
-	   || !strcasecmp(driver, "Win32")) {
-	  if(!strcasecmp(driver, keyboarddriver)) {
-	    if(!strcasecmp(field, "counterclockwise")) {
-	      scancode[0] = keycode(value);
-	    }
-	    else if(!strcasecmp(field, "clockwise")) {
-	      scancode[1] = keycode(value);
-	    }
-	    else if(!strcasecmp(field, "thrust")) {
-	      scancode[2] = keycode(value);
-	    }
-	    else if(!strcasecmp(field, "fire")) {
-	      scancode[3] = keycode(value);
-	    }
-	    else if(!strcasecmp(field, "pickup")) {
-	      scancode[4] = keycode(value);
-	    }
-	    else {
-	      printf("Illegal keyboard field \"%s\" specified in row %d.\n",
-		     field, rows);
-	    }
-	  }
-	}
-	else {
-	  printf("Illegal keyboard driver \"%s\" specified in row %d.\n",
-		 driver, rows);
-	}
-      }
-    }
+    if(idx >= 0)
+      printf("  %s -> %s\n", field, keystring(scancode[idx]));
   }
 
   fclose(f);
