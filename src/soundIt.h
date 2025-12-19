@@ -35,7 +35,7 @@
 
 /*==========================================================================*/
 typedef struct {
-  byte *data;	/* unsigned 8-bit raw samples */
+  uint8_t *data;	/* unsigned 8-bit raw samples */
   int len;    /* length of sample in bytes  */
   int loop;   /* loop=0 : play sample once, */
               /* loop=1 : loop sample       */

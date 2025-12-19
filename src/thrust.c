@@ -38,30 +38,30 @@
 # define SND_ZERO   4
 #endif
 
-byte *bulletmap;
-byte *blocks;
-byte *ship;
-byte *shieldship;
-byte *bana;
-byte *fuelmap;
-byte *loadmap;
-byte *shipstorage;
-byte *bulletstorage;
-byte *fragmentstorage;
-byte *fuelstorage;
-byte *loadstorage;
-byte *wirestorage;
+uint8_t *bulletmap;
+uint8_t *blocks;
+uint8_t *ship;
+uint8_t *shieldship;
+uint8_t *bana;
+uint8_t *fuelmap;
+uint8_t *loadmap;
+uint8_t *shipstorage;
+uint8_t *bulletstorage;
+uint8_t *fragmentstorage;
+uint8_t *fuelstorage;
+uint8_t *loadstorage;
+uint8_t *wirestorage;
 
-word lenx; /* x-size of level */
-word leny; /* y-size of level */
-word lenx3, leny3;
+uint32_t lenx; /* x-size of level */
+uint32_t leny; /* y-size of level */
+uint32_t lenx3, leny3;
              /* Status of game. */
 double alpha, deltaalpha;
-word loaded, loadcontact, loadpointshift;
+uint32_t loaded, loadcontact, loadpointshift;
 int loadpoint;
 int countdown;
-word crash, shoot, repetetive;
-word refueling;
+uint32_t crash, shoot, repetetive;
+uint32_t refueling;
 int speedx, speedy;
 long absspeed, oldabs;
 int kdir, dir;
@@ -75,8 +75,8 @@ int bblockx, bblocky;  /* Top left corner of backing store (in blocks). */
 int loadbx, loadby;    /* Position of the load (in blocks). */
 int gravity;
 int score;
-byte shield;
-byte colorr, colorg, colorb;
+uint8_t shield;
+uint8_t colorr, colorg, colorb;
 int nodemo=0;
 int Thrust_Is_On=0;
 int play_sound=1;
@@ -110,7 +110,7 @@ void
 updateborder(int pblkx, int pblky, int bblkx, int bblky,
              int vx, int vy)
 {
-  word k;
+  uint32_t k;
 
   if(vy<=0) /* update bottom border */
     for(k=0; k<BBILDX; k++)
@@ -156,10 +156,10 @@ escape_message(void)
   displayscreen();
 }
 
-byte
+uint8_t
 whatkeys(void)
 {
-  byte keys;
+  uint8_t keys;
 
 /* Use this to create a demo.
  * Don't forget to uncomment the fputc statement below.
@@ -178,11 +178,11 @@ whatkeys(void)
   return(keys);
 }
 
-byte
+uint8_t
 nextmove(int reset)
 {
-  static byte *p;
-  byte retbits=0;
+  static uint8_t *p;
+  uint8_t retbits=0;
 
   if(reset) {
     keywaiting();
@@ -265,12 +265,12 @@ gamestatus(int lives, int fuel, int score)
 int
 game(int demo)
 {
-  byte actionbits=0;
+  uint8_t actionbits=0;
   double ax, ay, acircum;
-  word lives, endlevel;
-  word dying;
-  word alive;
-  word fuel;
+  uint32_t lives, endlevel;
+  uint32_t dying;
+  uint32_t alive;
+  uint32_t fuel;
   int l;
   int level;
   int round;
@@ -359,18 +359,18 @@ game(int demo)
       actionbits=demo ? nextmove(0) : whatkeys();
 
       if(alive && (actionbits&right_bit)) {
-        decr(kdir, 0, 96);
+        DECR_WRAP(kdir, 0, 96);
         dir=kdir/3;
       }
       if(alive && (actionbits&left_bit)) {
-        incr(kdir, 96, 0);
+        INCR_WRAP(kdir, 96, 0);
         dir=kdir/3;
       }
       if(alive && (actionbits&fire_bit)) {
         if(!shoot) {
           shoot=1;
-          newbullet((word)(x+((160+shipdx)<<3)+74*cos(dir * M_PI/16)),
-        	    (word)(y+(( 88+shipdy)<<3)-74*sin(dir * M_PI/16)),
+          newbullet((uint32_t)(x+((160+shipdx)<<3)+74*cos(dir * M_PI/16)),
+        	    (uint32_t)(y+(( 88+shipdy)<<3)-74*sin(dir * M_PI/16)),
         	    (int)(speedx/256.0+32*cos(dir * M_PI/16)),
         	    (int)(speedy/256.0+32*sin(dir * M_PI/16)),
         	    kdir/6, 1);
@@ -602,10 +602,10 @@ game(int demo)
         else if(speedy<0)
           speedy++;
         /* Move the Ship */
-        speedx=min(speedx, 16384);
-        speedx=max(speedx, -16384);
-        speedy=min(speedy, 16384);
-        speedy=max(speedy, -16384);
+        speedx = (speedx < 16384) ? speedx : 16384;
+        speedx = (speedx > -16384) ? speedx : -16384;
+        speedy = (speedy < 16384) ? speedy : 16384;
+        speedy = (speedy > -16384) ? speedy : -16384;
         if(speedx>=0)
           vx=(speedx+1)>>8;
         else
@@ -1003,7 +1003,7 @@ int
 showhighscores(void)
 {
   char str[100];
-  byte tmp=chcolor;
+  uint8_t tmp=chcolor;
   int i;
   int scorew, namew;
   int len;

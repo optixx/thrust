@@ -21,14 +21,14 @@ struct thingdef	{
   void *data;
 };
 typedef struct thingdef thing;
-extern word nrthings;
+extern uint32_t nrthings;
 
 struct sliderdef {
   int type,x1,y1,x2,y2,dir,active,stage,count,match;
   struct sliderdef *next;
 };
 typedef struct sliderdef slider;
-extern word nrsliders;
+extern uint32_t nrsliders;
 
 struct buttondatadef {
   int major;
@@ -38,17 +38,17 @@ struct buttondatadef {
 typedef struct buttondatadef buttondata;
 
 struct restartpointdef {
-  word x, y;
+  uint32_t x, y;
 };
 typedef struct restartpointdef restartpoint;
-extern word nrrestartpoints;
+extern uint32_t nrrestartpoints;
 
 struct barrierdef {
-  word x, y;
+  uint32_t x, y;
   restartpoint *restart;
 };
 typedef struct barrierdef restartbarrier;
-extern word nrbarriers;
+extern uint32_t nrbarriers;
 
 
 #define maxbullets (64)
@@ -64,33 +64,33 @@ extern restartbarrier barriers[maxbarriers];
 #define maxrestartpoints (16)
 extern restartpoint restartpoints[maxrestartpoints];
 
-extern word powerplant;
-extern word ppx, ppy, ppcount;	/* Power Plant variables */
-extern word ppblip;
+extern uint32_t powerplant;
+extern uint32_t ppx, ppy, ppcount;	/* Power Plant variables */
+extern uint32_t ppblip;
 
 void newslider(int x, int y, int type);
 int majorbutton(int button);
 void newthing(int x, int y, int px, int py, int type, void *data);
 void animatesliders(void);
 void startupsliders(int button);
-restartpoint *atbarrier(word bx, word by);
+restartpoint *atbarrier(uint32_t bx, uint32_t by);
 void deletething(thing *tp);
-void newbullet(word x, word y, int vx, int vy, word dir, int owner);
+void newbullet(uint32_t x, uint32_t y, int vx, int vy, uint32_t dir, int owner);
 void movebullets(void);
-word crashtype(word type);
+uint32_t crashtype(uint32_t type);
 int inloadcontact(int x, int y);
 int resonablefuel(int x, int y, int l);
 int closestfuel(int x, int y);
 int closestbutton(int x, int y);
-void hit(word x, word y, word crash, word owner);
+void hit(uint32_t x, uint32_t y, uint32_t crash, uint32_t owner);
 void bunkerfirebullet(thing *b);
 void bunkerfirebullets(void);
 int killdyingthings(void);
 void killallthings(void);
-void newfragment(word x, word y);
+void newfragment(uint32_t x, uint32_t y);
 void explodething(thing *thingptr);
 void explodeship(void);
 void movefragments(void);
-word livefragments(void);
+uint32_t livefragments(void);
 
 #endif /* THINGS_H */

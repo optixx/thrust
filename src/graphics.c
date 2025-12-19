@@ -14,8 +14,8 @@
 #include "thrust.h"
 #include "font5x5.h"
 
-byte *bild;
-static byte fuelblink;
+uint8_t *bild;
+static uint8_t fuelblink;
 
 void
 putscr(int x, int y, int force_draw)
@@ -35,10 +35,10 @@ putscr(int x, int y, int force_draw)
 }
 
 void
-putblock(int x, int y, byte *source)
+putblock(int x, int y, uint8_t *source)
 {
   int i;
-  byte *dest1, *dest2;
+  uint8_t *dest1, *dest2;
 
   dest1=bild+((y<<3)*(PBILDX<<1))+(x<<3);
   dest2=dest1+((x>=BBILDX)?-(PBILDX):(PBILDX));
@@ -56,7 +56,7 @@ void
 drawfuel(int fuel)
 {
   char str[16];
-  byte tmpcol, tmppap, tmpflg;
+  uint8_t tmpcol, tmppap, tmpflg;
 
   tmpcol=chcolor;
   tmppap=chpaper;
@@ -76,9 +76,9 @@ drawfuel(int fuel)
 }
 
 void
-drawship(word bx, word by, byte *ship, byte *storage)
+drawship(uint32_t bx, uint32_t by, uint8_t *ship, uint8_t *storage)
 {
-  byte *maxtmp, *tmp, pix;
+  uint8_t *maxtmp, *tmp, pix;
   int i,j;
 
   maxtmp=bild+((PBILDY-1)*PBILDX<<1);
@@ -98,9 +98,9 @@ drawship(word bx, word by, byte *ship, byte *storage)
 }
 
 void
-undrawship(word bx, word by, byte *storage)
+undrawship(uint32_t bx, uint32_t by, uint8_t *storage)
 {
-  byte *maxtmp, *tmp;
+  uint8_t *maxtmp, *tmp;
   int i;
 
   maxtmp=bild+((PBILDY-1)*PBILDX<<1);
@@ -115,15 +115,15 @@ undrawship(word bx, word by, byte *storage)
 }
 
 void
-drawsquare(word bx, word by,
-	   byte *object, byte *storage,
-	   byte deltax, byte deltay)
+drawsquare(uint32_t bx, uint32_t by,
+	   uint8_t *object, uint8_t *storage,
+	   uint8_t deltax, uint8_t deltay)
 {
-  byte *maxtmp, *tmp, pix;
-  word i,j;
-  word deltaxy;
+  uint8_t *maxtmp, *tmp, pix;
+  uint32_t i,j;
+  uint32_t deltaxy;
 
-  deltaxy=(word)deltax*deltay;
+  deltaxy=(uint32_t)deltax*deltay;
   maxtmp=bild+((PBILDY-1)*PBILDX<<1);
   tmp=bild+by*(PBILDX<<1)+bx;
   for(i=0; i<deltaxy; i+=(int)deltax) {
@@ -141,15 +141,15 @@ drawsquare(word bx, word by,
 }
 
 void
-undrawsquare(word bx, word by,
-	     byte *storage,
-	     byte deltax, byte deltay)
+undrawsquare(uint32_t bx, uint32_t by,
+	     uint8_t *storage,
+	     uint8_t deltax, uint8_t deltay)
 {
-  byte *maxtmp, *tmp;
-  word i;
-  word deltaxy;
+  uint8_t *maxtmp, *tmp;
+  uint32_t i;
+  uint32_t deltaxy;
 
-  deltaxy=(word)deltax*deltay;
+  deltaxy=(uint32_t)deltax*deltay;
   maxtmp=bild+((PBILDY-1)*PBILDX<<1);
   tmp=bild+by*(PBILDX<<1)+bx;
   for(i=0; i<deltaxy; i+=(int)deltax) {
@@ -161,11 +161,11 @@ undrawsquare(word bx, word by,
   }
 }
 
-word
-testcrash(byte *object, byte *storage, word len, byte shield)
+uint32_t
+testcrash(uint8_t *object, uint8_t *storage, uint32_t len, uint8_t shield)
 {
-  word i;
-  byte res=0;
+  uint32_t i;
+  uint8_t res=0;
 
   for(i=0; i<len; i++) {
     if(*(object++)) {
@@ -174,13 +174,13 @@ testcrash(byte *object, byte *storage, word len, byte shield)
     }
     storage++;
   }
-  return(((word)res)>>5);
+  return(((uint32_t)res)>>5);
 }
 
 void
-writeblock(word bx, word by, byte block)
+writeblock(uint32_t bx, uint32_t by, uint8_t block)
 {
-  word tempx, tempy;
+  uint32_t tempx, tempy;
 
   *(bana+bx+by*lenx)=block;
   tempx=bx;
@@ -203,8 +203,8 @@ void
 drawteleline(int round, int x1, int y1, int x2, int y2, int j, int k)
 {
   int l;
-  static byte telemem[2*5*4*NR_TP*SZ_TP];
-  static byte *tm;
+  static uint8_t telemem[2*5*4*NR_TP*SZ_TP];
+  static uint8_t *tm;
 
   switch(round) {
   case 0:
@@ -278,7 +278,7 @@ drawteleport(int tohere)
 
   syncscreen();
   for(i=0; i<NR_TP+SZ_TP-1; i++) {
-    for(k=min(SZ_TP-1, i), j=max(i-(SZ_TP-1), 0); j<=min(i, NR_TP-1); k--, j++)
+    for(k=MIN(SZ_TP-1, i), j=MAX(i-(SZ_TP-1), 0); j<=MIN(i, NR_TP-1); k--, j++)
       drawteleline(1, x1, y1, x2, y2, j, k);
     usleep(50000L);
     displayscreen();
@@ -291,12 +291,12 @@ drawteleport(int tohere)
   putscr(bildx, bildy, 1);
 
   for(i=0; i<NR_TP+SZ_TP-1; i++)
-    for(k=min(SZ_TP-1, i), j=max(i-(SZ_TP-1), 0); j<=min(i, NR_TP-1); k--, j++)
+    for(k=MIN(SZ_TP-1, i), j=MAX(i-(SZ_TP-1), 0); j<=MIN(i, NR_TP-1); k--, j++)
       drawteleline(1, x1, y1, x2, y2, j, k);
   displayscreen();
   drawteleline(0, 0, 0, 0, 0, 0, 0);
   for(i=0; i<NR_TP+SZ_TP-1; i++)
-    for(k=min(SZ_TP-1, i), j=max(i-(SZ_TP-1), 0); j<=min(i, NR_TP-1); k--, j++)
+    for(k=MIN(SZ_TP-1, i), j=MAX(i-(SZ_TP-1), 0); j<=MIN(i, NR_TP-1); k--, j++)
       drawteleline(2, x1, y1, x2, y2, j, k);
   
   usleep(250000UL);
@@ -304,7 +304,7 @@ drawteleport(int tohere)
   syncscreen();
   drawteleline(0, 0, 0, 0, 0, 0, 0);
   for(i=0; i<NR_TP+SZ_TP-1; i++) {
-    for(k=min(SZ_TP-1, i), j=max(i-(SZ_TP-1), 0); j<=min(i, NR_TP-1); k--, j++)
+    for(k=MIN(SZ_TP-1, i), j=MAX(i-(SZ_TP-1), 0); j<=MIN(i, NR_TP-1); k--, j++)
       drawteleline(3, x1, y1, x2, y2, j, k);
     usleep(50000L);
     displayscreen();
@@ -321,11 +321,11 @@ swap(int *pa, int *pb)
 }
 
 void
-drawlinev(int x1, int y1, int x2, int y2, byte color, byte *storage)
+drawlinev(int x1, int y1, int x2, int y2, uint8_t color, uint8_t *storage)
 {
   int d, dx, dy;
   int Ai, Bi, xi;
-  byte *ptr=bild;
+  uint8_t *ptr=bild;
 
   if(y1>y2) {
     swap(&x1, &x2);
@@ -356,11 +356,11 @@ drawlinev(int x1, int y1, int x2, int y2, byte color, byte *storage)
 }
 
 void
-undrawlinev(int x1, int y1, int x2, int y2, byte *storage)
+undrawlinev(int x1, int y1, int x2, int y2, uint8_t *storage)
 {
   int d, dx, dy;
   int Ai, Bi, xi;
-  byte *ptr=bild;
+  uint8_t *ptr=bild;
 
   if(y1>y2) {
     swap(&x1, &x2);
@@ -389,11 +389,11 @@ undrawlinev(int x1, int y1, int x2, int y2, byte *storage)
 }
 
 void
-drawlineh(int x1, int y1, int x2, int y2, byte color, byte *storage)
+drawlineh(int x1, int y1, int x2, int y2, uint8_t color, uint8_t *storage)
 {
   int d, dx, dy;
   int Ai, Bi, yi, i;
-  byte *ptr=bild;
+  uint8_t *ptr=bild;
 
   if(x1>x2) {
     swap(&x1, &x2);
@@ -438,11 +438,11 @@ drawlineh(int x1, int y1, int x2, int y2, byte color, byte *storage)
 }
 
 void
-undrawlineh(int x1, int y1, int x2, int y2, byte *storage)
+undrawlineh(int x1, int y1, int x2, int y2, uint8_t *storage)
 {
   int d, dx, dy;
   int Ai, Bi, yi, i;
-  byte *ptr=bild;
+  uint8_t *ptr=bild;
 
   if(x1>x2) {
     swap(&x1, &x2);
@@ -485,7 +485,7 @@ undrawlineh(int x1, int y1, int x2, int y2, byte *storage)
 }
 
 void
-drawline(int x1, int y1, int x2, int y2, byte color, byte *storage)
+drawline(int x1, int y1, int x2, int y2, uint8_t color, uint8_t *storage)
 {
   if(y1>y2+64)
     y2+=PBILDY;
@@ -498,7 +498,7 @@ drawline(int x1, int y1, int x2, int y2, byte color, byte *storage)
 }
 
 void
-undrawline(int x1, int y1, int x2, int y2, byte *storage)
+undrawline(int x1, int y1, int x2, int y2, uint8_t *storage)
 {
   if(y1>y2+64)
     y2+=PBILDY;
@@ -515,8 +515,8 @@ drawbullets(void)
 {
   int l;
   bullet *bulletptr;
-  word tempx, tempy;
-  byte target;
+  uint32_t tempx, tempy;
+  uint8_t target;
 
   for(l=0, bulletptr=bullets; l<maxbullets; l++, bulletptr++)
     if((*bulletptr).life) {
@@ -581,8 +581,8 @@ undrawbullets(void)
 {
   int l;
   bullet *bulletptr;
-  word tempx, tempy;
-  word crash;
+  uint32_t tempx, tempy;
+  uint32_t crash;
 
   for(l=maxbullets-1, bulletptr=bullets+maxbullets-1; l>=0; l--, bulletptr--)
     if((*bulletptr).life) {
@@ -611,8 +611,8 @@ drawfragments(void)
 {
   int l;
   fragment *fragmentptr;
-  word tempx, tempy;
-  static byte fragmentmap[4]={ 12, 12, 12, 12 };
+  uint32_t tempx, tempy;
+  static uint8_t fragmentmap[4]={ 12, 12, 12, 12 };
 
   for(l=0, fragmentptr=fragments; l<maxfragments; l++, fragmentptr++)
     if((*fragmentptr).life) {
@@ -635,9 +635,9 @@ undrawfragments(void)
 {
   int l;
   fragment *fragmentptr;
-  word tempx, tempy;
-  word crash;
-  static byte fragmentmap[4]={ 12, 12, 12, 12 };
+  uint32_t tempx, tempy;
+  uint32_t crash;
+  static uint8_t fragmentmap[4]={ 12, 12, 12, 12 };
 
   for(l=maxfragments-1, fragmentptr=fragments+maxfragments-1;
       l>=0;
@@ -663,7 +663,7 @@ undrawfragments(void)
 void
 drawpowerplantblip(void)
 {
-  word tempx, tempy;
+  uint32_t tempx, tempy;
 
   tempx=ppx;
   tempy=ppy;
@@ -679,7 +679,7 @@ drawpowerplantblip(void)
 void
 drawload(int flag)
 {
-  word tempx, tempy;
+  uint32_t tempx, tempy;
 
   tempx=loadbx;
   tempy=loadby;
@@ -691,15 +691,15 @@ drawload(int flag)
 	   blocks+((flag?109:32)<<6));
 }
 
-word
+uint32_t
 drawshuttle(void)
 {
-  word crash=0, tmp;
+  uint32_t crash=0, tmp;
 #ifdef DEBUG2
   int debug2i;
 #endif
   int x1, x2=0, y1, y2=0, lx, ly;
-  static byte wiremap[64] = {
+  static uint8_t wiremap[64] = {
     13, 13, 13, 13, 13, 13, 13, 13,
     13, 13, 13, 13, 13, 13, 13, 13,
     13, 13, 13, 13, 13, 13, 13, 13,
@@ -729,13 +729,13 @@ drawshuttle(void)
     if(ly>64)
       ly=abs(ly-PBILDY);
     drawline(x1, y1%PBILDY, x2, y2%PBILDY, 11, wirestorage);
-    tmp=testcrash(wiremap, wirestorage, max(lx, ly)+1, shield);
+    tmp=testcrash(wiremap, wirestorage, MAX(lx, ly)+1, shield);
 #ifdef DEBUG2
     if(tmp) {
       printf("Crash: Wire destroyed. By %d. Wirelength %d.\n",
-	     tmp, max(lx, ly)+1);
+	     tmp, MAX(lx, ly)+1);
       printf("Wirestorage:");
-      for(debug2i=0; debug2i<max(lx, ly)+1; debug2i++)
+      for(debug2i=0; debug2i<MAX(lx, ly)+1; debug2i++)
 	printf(" %02x", *(wirestorage+debug2i));
       printf("\n");
       printf("Killer line: x1=%d, y1=%d, x2=%d, y2=%d\n",
@@ -744,7 +744,7 @@ drawshuttle(void)
       usleep(10000000UL);
     }
 #endif
-    crash=max(crash, tmp);
+    crash=MAX(crash, tmp);
   }
   /* Draw the shuttle */
   drawship(bildx+154+shipdx, (bildy+82+shipdy)%PBILDY,
@@ -754,7 +754,7 @@ drawshuttle(void)
   if(tmp)
     printf("Crash: Ship destroyed. By %d.\n", tmp);
 #endif
-  crash=max(tmp, crash);
+  crash=MAX(tmp, crash);
   if(loaded || loadcontact) {
     if(loaded)
       drawsquare(x2-3, (y2-3)%PBILDY, loadmap, loadstorage, 8, 8);
@@ -772,7 +772,7 @@ drawshuttle(void)
     if(tmp)
       printf("Crash: Load destroyed. By %d.\n", tmp);
 #endif
-    crash=max(crash, tmp);
+    crash=MAX(crash, tmp);
   }
   return(crash);
 }

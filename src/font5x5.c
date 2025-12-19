@@ -14,18 +14,18 @@
 #include "graphics.h"
 #include "graphics.h"
 
-byte chcolor=TEXTCOLOR;
-byte chpaper=0;
-byte chflag=0;
+uint8_t chcolor=TEXTCOLOR;
+uint8_t chpaper=0;
+uint8_t chflag=0;
 
 void
-printgc(int x, int y, byte ch)
+printgc(int x, int y, uint8_t ch)
 {
   int dx;
   int dy;
   char width;
-  byte bits;
-  byte bit;
+  uint8_t bits;
+  uint8_t bit;
 
   /*  ch = toupper(ch);*/
   width = font[ch][0];
@@ -45,9 +45,9 @@ printgc(int x, int y, byte ch)
 int
 printgs(int x, int y, char *string)
 {
-  byte i;
-  byte len=strlen(string);
-  byte ch;
+  uint8_t i;
+  uint8_t len=strlen(string);
+  uint8_t ch;
   int ox=x;
 
   for(i=0; i<len; i++) {
@@ -77,10 +77,10 @@ readgs(int x, int y, char string[], int maxc, int maxp, char flag)
 {
   int i, j;
   int key;
-  byte ch;
-  byte temp=chcolor;
+  uint8_t ch;
+  uint8_t temp=chcolor;
   int leftx=x;
-  byte cursor=0;
+  uint8_t cursor=0;
   int xc;
 
   maxp+=x;
@@ -98,7 +98,7 @@ readgs(int x, int y, char string[], int maxc, int maxp, char flag)
       }
       /*      vga_lockvc();*/
       for(j=0; j<5; j++)
-	putpixel(x+j, y+5, (byte)((int)cursor*temp));
+	putpixel(x+j, y+5, (uint8_t)((int)cursor*temp));
       displayscreen();
       /*      vga_unlockvc();*/
     } while(!key);
@@ -167,7 +167,7 @@ gstrlen(char *string)
   int width=0;
   int count=0;
   int i;
-  byte ch;
+  uint8_t ch;
 
   for(i=0; i<len; i++) {
     /*ch = toupper(*(string+i));*/

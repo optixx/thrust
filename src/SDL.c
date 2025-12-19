@@ -21,7 +21,7 @@ static SDL_Color palette[256];
 static Uint32 palette32[256];
 
 static void
-update_palette_from_table(int first, int last, byte *RGBtable)
+update_palette_from_table(int first, int last, uint8_t *RGBtable)
 {
   int n = last - first + 1;
   int i;
@@ -181,7 +181,7 @@ syncscreen(void)
 }
 
 void
-putpixel(int x, int y, byte color)
+putpixel(int x, int y, uint8_t color)
 {
   if(x < 0 || x >= X || y < 0 || y >= Y)
     return;
@@ -189,7 +189,7 @@ putpixel(int x, int y, byte color)
 }
 
 void
-putarea(byte *source, int x, int y, int width, int height, int bytesperline, int destx, int desty)
+putarea(uint8_t *source, int x, int y, int width, int height, int bytesperline, int destx, int desty)
 {
   int j;
   int sx = x;
@@ -219,14 +219,14 @@ putarea(byte *source, int x, int y, int width, int height, int bytesperline, int
     return;
 
   for(j = 0; j < h; j++) {
-    byte *dstrow = framebuffer + (dy + j) * X + dx;
-    byte *srcrow = source + (sy + j) * bytesperline + sx;
+    uint8_t *dstrow = framebuffer + (dy + j) * X + dx;
+    uint8_t *srcrow = source + (sy + j) * bytesperline + sx;
     memcpy(dstrow, srcrow, (size_t)w);
   }
 }
 
 void
-fadepalette(int first, int last, byte *RGBtable, int fade, int flag)
+fadepalette(int first, int last, uint8_t *RGBtable, int fade, int flag)
 {
   (void)fade; /* fade ignored */
   update_palette_from_table(first, last, RGBtable + first * 3);

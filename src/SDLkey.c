@@ -10,7 +10,7 @@
 // left, right, thrust, fire, pick (, quit, pause, continue)
 int scancode[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 static struct {
-  byte keybits;
+  uint8_t keybits;
   SDL_Keycode last_key;
   int quit_requested;
 } input_state;
@@ -74,7 +74,7 @@ static void
 update_keybits(void)
 {
   const Uint8 *state;
-  byte keybits = 0;
+  uint8_t keybits = 0;
 
   state = SDL_GetKeyboardState(NULL);
 
@@ -116,7 +116,7 @@ pump_events(void)
   update_keybits();
 }
 
-byte
+uint8_t
 getkeys(void)
 {
   pump_events();

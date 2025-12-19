@@ -13,7 +13,7 @@
 #include "thrust.h"
 
 static unsigned
-manhattan_distance(word ax, word ay, word bx, word by)
+manhattan_distance(uint32_t ax, uint32_t ay, uint32_t bx, uint32_t by)
 {
   unsigned dx = ax > bx ? ax - bx : bx - ax;
   unsigned dy = ay > by ? ay - by : by - ay;
@@ -23,8 +23,8 @@ manhattan_distance(word ax, word ay, word bx, word by)
 int
 matchsliders(void)
 {
-  word i,j;
-  word match;
+  uint32_t i,j;
+  uint32_t match;
   int dist;
 
   for(i=0; i<nrsliders; i++) {
@@ -98,7 +98,7 @@ matchsliders(void)
 int
 ismajorbutton(int tag)
 {
-  word i;
+  uint32_t i;
 
   for(i=0; i<nrthings; i++)
     if((things[i].type==7 || things[i].type==8)
@@ -110,7 +110,7 @@ ismajorbutton(int tag)
 void
 releasebana(void)
 {
-  word i;
+  uint32_t i;
 
   for(i=0; i<nrthings; i++)
     if(things[i].data)
@@ -146,8 +146,8 @@ readbana(char **ptr)
      */
 {
   int stat=1;
-  word t1,t2,x,y,z;
-  word sx,sy,sz;
+  uint32_t t1,t2,x,y,z;
+  uint32_t sx,sy,sz;
   char *temp;
   buttondata *bdata;
 

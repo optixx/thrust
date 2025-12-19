@@ -42,7 +42,7 @@ static void
 audio_callback(void *userdata, Uint8 *stream, int len)
 {
   ChannelState *channels = (ChannelState *)userdata;
-  int samples = len; /* AUDIO_U8 mono: 1 byte per sample */
+  int samples = len; /* AUDIO_U8 mono: 1 uint8_t per sample */
   int i;
 
   while(samples--) {

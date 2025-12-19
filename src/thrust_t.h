@@ -4,31 +4,28 @@
 #ifndef THRUST_TYPES_H
 #define THRUST_TYPES_H
 
-#define incr(x,max,return) \
-{ \
+#define INCR_WRAP(x, max_val, reset_val) \
+  do { \
     (x)++; \
-    if((x)>=(max)) \
-      (x)=(return); \
-}
-#define decr(x,min,return) \
-{ \
+    if((x) >= (max_val)) \
+      (x) = (reset_val); \
+  } while(0)
+
+#define DECR_WRAP(x, min_val, reset_val) \
+  do { \
     (x)--; \
-    if((x)<(min)) \
-      (x)=(return)-1; \
-}
+    if((x) < (min_val)) \
+      (x) = (reset_val) - 1; \
+  } while(0)
 
-#ifndef min
-#define min(x,y) \
- (((x)<(y))?(x):(y))
+#include <stdint.h>
+
+#ifndef MIN
+#define MIN(a,b) (( (a) < (b) ) ? (a) : (b))
 #endif
 
-#ifndef max
-#define max(x,y) \
- (((x)<(y))?(y):(x))
+#ifndef MAX
+#define MAX(a,b) (( (a) > (b) ) ? (a) : (b))
 #endif
-
-typedef unsigned char byte;
-typedef unsigned int word;
-typedef unsigned long dword;
 
 #endif /* THRUST_TYPES_H */

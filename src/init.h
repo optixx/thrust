@@ -8,7 +8,7 @@
 
 void turnship(void);
 void makeshieldedship(void);
-void makefuelmap(byte *fuelmap);
+void makefuelmap(uint8_t *fuelmap);
 int initmem(void);
 void inithardware(int argc, char **argv);
 void initscreen(int round);

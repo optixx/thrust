@@ -39,7 +39,7 @@ Sample snd[NUM_SAMPLES];
 void
 turnship(void)
 {
-  word i,j,k;
+  uint32_t i,j,k;
 
   for(k=0; k<4; k++)
     for(i=0; i<16; i++)
@@ -66,7 +66,7 @@ turnship(void)
 void
 makeshieldedship(void)
 {
-  word i,j,k;
+  uint32_t i,j,k;
 
   memcpy(shieldship, ship, 8192);
   for(i=0; i<32; i++)
@@ -77,7 +77,7 @@ makeshieldedship(void)
 }
 
 void
-makefuelmap(byte *fuelmap)
+makefuelmap(uint8_t *fuelmap)
 {
   int i;
 
@@ -92,23 +92,23 @@ makefuelmap(byte *fuelmap)
 int
 initmem(void)
 {
-  word i;
+  uint32_t i;
 
   printf("Allocating memory...");
 
-  bild=(byte *)malloc((long)PBILDX*PBILDY*2+16);
-  bana=(byte *)malloc(maxlenx*maxleny);
-  ship=(byte *)malloc(8192);
-  shieldship=(byte *)malloc(8192);
-  shipstorage=(byte *)malloc(256);
-  bulletmap=(byte *)malloc(256);
-  bulletstorage=(byte *)malloc(maxbullets*16);
-  fragmentstorage=(byte *)malloc(maxfragments*4);
-  fuelmap=(byte *)malloc(256);
-  fuelstorage=(byte *)malloc(256);
-  loadmap=(byte *)malloc(64);
-  loadstorage=(byte *)malloc(64);
-  wirestorage=(byte *)malloc(64);
+  bild=(uint8_t *)malloc((long)PBILDX*PBILDY*2+16);
+  bana=(uint8_t *)malloc(maxlenx*maxleny);
+  ship=(uint8_t *)malloc(8192);
+  shieldship=(uint8_t *)malloc(8192);
+  shipstorage=(uint8_t *)malloc(256);
+  bulletmap=(uint8_t *)malloc(256);
+  bulletstorage=(uint8_t *)malloc(maxbullets*16);
+  fragmentstorage=(uint8_t *)malloc(maxfragments*4);
+  fuelmap=(uint8_t *)malloc(256);
+  fuelstorage=(uint8_t *)malloc(256);
+  loadmap=(uint8_t *)malloc(64);
+  loadstorage=(uint8_t *)malloc(64);
+  wirestorage=(uint8_t *)malloc(64);
 
   if(!bild || !bana || !ship || !shieldship || !shipstorage
      || !bulletmap || !bulletstorage || !fragmentstorage

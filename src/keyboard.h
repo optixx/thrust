@@ -18,7 +18,7 @@ enum {
 int getonemultiplekey(void);
 int getkey(void);
 int wait_for_key(void);
-byte getkeys(void);
+uint8_t getkeys(void);
 char *keystring(int key);
 int keycode(char *keyname);
 void flushkeyboard(void);

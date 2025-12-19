@@ -39,10 +39,10 @@
 # define SND_ZERO   4
 #endif
 
-word nrthings=0;
-word nrsliders=0;
-word nrbarriers=0;
-word nrrestartpoints=0;
+uint32_t nrthings=0;
+uint32_t nrsliders=0;
+uint32_t nrbarriers=0;
+uint32_t nrrestartpoints=0;
 
 bullet bullets[maxbullets];
 fragment fragments[maxfragments];
@@ -51,9 +51,9 @@ slider sliders[maxsliders];
 restartbarrier barriers[maxbarriers];
 restartpoint restartpoints[maxrestartpoints];
 
-word powerplant;
-word ppx,ppy,ppcount;	/* Power Plant variables */
-word ppblip;
+uint32_t powerplant;
+uint32_t ppx,ppy,ppcount;	/* Power Plant variables */
+uint32_t ppblip;
 
 void
 newslider(int x, int y, int type)
@@ -102,7 +102,7 @@ void
 animatesliders(void)
 {
   slider *s=sliders;
-  word i;
+  uint32_t i;
 
   for(i=0; i<nrsliders; i++, s++)
     if(s->active) {
@@ -347,9 +347,9 @@ startupsliders(int button)
 }
 
 restartpoint *
-atbarrier(word bx, word by)
+atbarrier(uint32_t bx, uint32_t by)
 {
-  word i;
+  uint32_t i;
 
   for(i=0; i<nrbarriers; i++)
     if((barriers[i].x==bx) && (barriers[i].y==by))
@@ -428,9 +428,9 @@ deletething(thing *tp)
 }
 
 void
-newbullet(word x, word y, int vx, int vy, word dir, int owner)
+newbullet(uint32_t x, uint32_t y, int vx, int vy, uint32_t dir, int owner)
 {
-  static word nr=0;
+  static uint32_t nr=0;
 
 #ifdef HAVE_SOUND
   if(play_sound)
@@ -462,8 +462,8 @@ movebullets(void)
     }
 }
 
-word
-crashtype(word type)
+uint32_t
+crashtype(uint32_t type)
 {
   switch(type) {
   case 1:      /* Fuel */
@@ -501,8 +501,10 @@ inloadcontact(int x, int y)
     angle = atan2(speedy, speedx) - alpha;
     sp=hypot(speedx, speedy);
     deltaalpha=sp*sin(angle)/2 * M_PI/262144;
-    deltaalpha=min(deltaalpha,  M_PI/16);
-    deltaalpha=max(deltaalpha, -M_PI/16);
+    if(deltaalpha >  M_PI/16)
+      deltaalpha =  M_PI/16;
+    if(deltaalpha < -M_PI/16)
+      deltaalpha = -M_PI/16;
     spr=sp*cos(angle);
     speedx = (int)(spr*cos(alpha)/(1 + REL_MASS));
     speedy = (int)(spr*sin(alpha)/(1 + REL_MASS));
@@ -522,14 +524,14 @@ resonablefuel(int x, int y, int l)
   if(dx>(int)(lenx3>>1))
     dx=lenx3-dx;
   if(-dx>(int)(lenx3>>1))
-    dx=(word)(-(int)lenx3)+dx;
+    dx=(uint32_t)(-(int)lenx3)+dx;
   return(dx>-10 && dx<9 && dy>5 && dy<60);
 }
 
 int
 closestfuel(int x, int y)
 {
-  word i, which=0;
+  uint32_t i, which=0;
   thing *thingptr;
   int dx, dy;
   int minimum=MAXINT, d;
@@ -555,7 +557,7 @@ closestfuel(int x, int y)
 int
 closestbutton(int x, int y)
 {
-  word i, which=0;
+  uint32_t i, which=0;
   thing *thingptr;
   int dx, dy;
   int minimum=MAXINT, d;
@@ -578,9 +580,9 @@ closestbutton(int x, int y)
 }
 
 void
-hit(word x, word y, word crash, word owner)
+hit(uint32_t x, uint32_t y, uint32_t crash, uint32_t owner)
 {
-  word i, which=0;
+  uint32_t i, which=0;
   thing *thingptr;
   long dx, dy;
   long minimum=MAXLONG, d;
@@ -676,7 +678,7 @@ bunkerfirebullet(thing *b)
 void
 bunkerfirebullets(void)
 {
-  word l;
+  uint32_t l;
   thing *thingptr;
 
   for(l=0, thingptr=things; l<nrthings; l++, thingptr++)
@@ -689,7 +691,7 @@ bunkerfirebullets(void)
 int
 killdyingthings(void)
 {
-  word l;
+  uint32_t l;
   thing *thingptr;
   int res;
 
@@ -707,7 +709,7 @@ void
 killallthings(void)
 {
   thing *thingptr;
-  word l;
+  uint32_t l;
 
   for(l=0, thingptr=things; l<nrthings; l++, thingptr++) {
     if((*thingptr).alive > 1) {
@@ -719,9 +721,9 @@ killallthings(void)
 }
 
 void
-newfragment(word x, word y)
+newfragment(uint32_t x, uint32_t y)
 {
-  static word nr=0;
+  static uint32_t nr=0;
   int dir;
   int speed;
 
@@ -794,7 +796,7 @@ movefragments(void)
     }
 }
 
-word
+uint32_t
 livefragments(void)
 {
   int l;

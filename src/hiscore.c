@@ -31,13 +31,13 @@ read_le32(FILE *fp, int *out)
 {
   int i;
   int value = 0;
-  int byte;
+  int byte_val;
 
   for(i = 0; i < 4; i++) {
-    byte = fgetc(fp);
-    if(byte == EOF)
+    byte_val = fgetc(fp);
+    if(byte_val == EOF)
       return 0;
-    value |= byte << (8 * i);
+    value |= byte_val << (8 * i);
   }
 
   *out = value;

@@ -3,7 +3,7 @@
 
 #include "../src/thrust_t.h"
 
-byte font[256][6] =
+uint8_t font[256][6] =
  {
    { 5,
     0x00 ,
