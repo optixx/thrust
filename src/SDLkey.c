@@ -91,16 +91,6 @@ getkeys(void)
   return keybits;
 }
 
-void
-singlekey(void)
-{
-}
-
-void
-multiplekeys(void)
-{
-}
-
 int
 getonemultiplekey(void)
 {

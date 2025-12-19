@@ -15,8 +15,6 @@ enum {
   quit_bit  =1<<7
 };
 
-void singlekey(void);
-void multiplekeys(void);
 int getonemultiplekey(void);
 int getkey(void);
 byte getkeys(void);

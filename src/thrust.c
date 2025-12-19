@@ -507,7 +507,6 @@ game(int demo)
         }
 #endif
         pause_message();
-        singlekey();
         end=NOTHING;
         while(getkey());
         while(end==NOTHING) {
@@ -538,7 +537,6 @@ game(int demo)
         }
         if(easyrider!=9)
           easyrider=0;
-        multiplekeys();
       }
       if(actionbits&escape_bit) {
 #ifdef HAVE_SOUND
@@ -548,7 +546,6 @@ game(int demo)
         }
 #endif
         escape_message();
-        singlekey();
         end=NOTHING;
         while(end==NOTHING) {
           ch=getkey();
@@ -567,7 +564,6 @@ game(int demo)
           }
           usleep(50000UL);
         }
-        multiplekeys();
       }
 
 
@@ -854,13 +850,9 @@ game(int demo)
 void
 pressanykey(void)
 {
-  singlekey();
-
   do
     usleep(50000UL);
   while(!getkey());
-
-  multiplekeys();
 }
 
 int
@@ -1006,12 +998,8 @@ enterhighscorename(void)
   printgs(130, 97, name);
   fade_in();
 
-  singlekey();
-
   if(readgs(130, 97, name, 39, 80, 0)==-1)
     strcpy(name, standardname());
-
-  multiplekeys();
 
   fade_out();
 
@@ -1094,7 +1082,6 @@ menu(void)
   chcolor = TEXTCOLOR;
 
   fade_in();
-  singlekey();
 
   while(end==NOTHING) {
     ch=getkey();
@@ -1136,7 +1123,6 @@ menu(void)
     }
   }
 
-  multiplekeys();
   fade_out();
 
   return(end);
