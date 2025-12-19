@@ -7,6 +7,6 @@
 int matchsliders(void);
 int ismajorbutton(int tag);
 void releasebana(void);
-int readbana(char **ptr);
+int readbana(char** ptr);
 
 #endif /* LEVEL_H */

@@ -7,6 +7,9 @@ Version 0.90 December 19, 2025
 
 * Added a `-s/--smooth` runtime switch so the SDL renderer can use linear filtering for zoomed displays, while leaving the default nearest-neighbor scaling unchanged.
 
+* Centralized the per-frame pacing in `src/thrust.c`: the main loop now measures `SDL_GetTicks()` and calls `SDL_Delay` to hold a steady 20 ms step instead of relying on `syncscreen()` for timing.
+
+* Switched the build to `-std=c11` and introduced clang-format/clang-tidy/cppcheck helpers (with scripts/Makefile targets) so the SDL2 port can modernize without manual bookkeeping.
 
 Version 0.89c-sdl1-current
 

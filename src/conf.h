@@ -5,7 +5,7 @@
 #define CONF_H
 
 extern int scancode[];
-extern char *keynames[];
+extern char* keynames[];
 
 void initkeys(void);
 void conf(void);

@@ -34,7 +34,7 @@ ASSET_OBJ_DIR = $(OBJDIR)/assets
 
 DEFINES      = $(strip -DHIGHSCOREFILE=\"$(HISCORE)\" -DVERSION=\"$(VERSION)\")
 WARNFLAGS    = -Wall -Wstrict-prototypes -Wmissing-prototypes
-STDFLAGS     = -std=gnu89
+STDFLAGS     = -std=c11
 OPTIMIZE     = -fomit-frame-pointer -O3
 CFLAGS ?= $(WARNFLAGS) $(STDFLAGS) $(OPTIMIZE)
 ALL_CFLAGS   = $(strip $(DEFINES) $(CFLAGS) $(SDL_CFLAGS))
@@ -63,6 +63,12 @@ all: sdlthrust
 clean:
 	rm -rf $(strip *~ core sdlthrust $(OBJS) $(SDL_OBJS) assets/*.bin .depend build)
 	rm -f build-stamp
+
+format:
+	./scripts/format.sh
+
+lint:
+	./scripts/lint.sh
 
 sdlthrust: $(OBJS) $(SDL_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^ $(SDL_LIBS) $(LIBS)

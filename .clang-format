@@ -1,0 +1,17 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+AllowShortFunctionsOnASingleLine: InlineOnly
+DerivePointerAlignment: false
+PointerAlignment: Left
+ColumnLimit: 100
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+  AfterControlStatement: Always
+  AfterStruct: true
+  AfterClass: true
+  BeforeElse: true
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true

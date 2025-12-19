@@ -8,18 +8,19 @@
 
 #define HIGHSCORES (5)
 
-typedef struct {
-  char name[40];
-  int score;
+typedef struct
+{
+    char name[40];
+    int score;
 } highscoreentry;
 
 extern highscoreentry highscorelist[HIGHSCORES];
 
 void writehighscores(void);
 int readhighscores(void);
-char *standardname(void);
+char* standardname(void);
 int inithighscorelist(void);
 int ahighscore(int score);
-void inserthighscore(char *name, int score);
+void inserthighscore(char* name, int score);
 
 #endif /* HISCORE_H */

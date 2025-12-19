@@ -8,6 +8,8 @@ Build instructions:
   * `make all` – rebuilds the assets (via `helpers/asset_tool.py`) and compiles `sdlthrust`.
   * `make clean` – deletes generated assets, object files, and the `sdlthrust` binary.
   * Set `SDLCONFIG` to a custom `sdl2-config` if you do not want to use the system default; the makefile falls back to `/opt/homebrew` and `/Library/Frameworks` paths on macOS.
+  * `make format` – runs `clang-format` across the tracked `.c/.h` files.
+  * `make lint` – runs `clang-tidy` (with the bundled `.clang-tidy` policy) plus `cppcheck` to highlight modernization opportunities.
 
 Configuration defaults and key mappings live in the sample `thrust.rc` shipped with the project. The game looks for `thrust.rc` in the current working directory so you can clone the repo and run `./sdlthrust` alongside that file without touching your home directory.
 
