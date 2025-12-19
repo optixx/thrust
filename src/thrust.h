@@ -23,10 +23,6 @@
 #define REL_MASS 1.1
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "thrust_t.h"
 
 /* How many levels and what they are named. */

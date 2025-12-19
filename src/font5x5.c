@@ -1,10 +1,6 @@
 
 /* Written by Peter Ekberg, peda@lysator.liu.se */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <unistd.h>
 
 #include <stdio.h>

@@ -48,13 +48,13 @@ OBJDIR       = build
 SRC_OBJ_DIR  = $(OBJDIR)/src
 ASSET_OBJ_DIR = $(OBJDIR)/assets
 
-DEFINES      = $(strip -DHIGHSCOREFILE=\"$(FULLHISCORE)\" -DVERSION=\"$(VERSION)\" -DHAVE_CONFIG_H)
+DEFINES      = $(strip -DHIGHSCOREFILE=\"$(FULLHISCORE)\" -DVERSION=\"$(VERSION)\" -DHAVE_SOUND)
 WARNFLAGS    = -Wall -Wstrict-prototypes -Wmissing-prototypes
 STDFLAGS     = -std=gnu89
 OPTIMIZE     = -fomit-frame-pointer -O3
 CFLAGS ?= $(WARNFLAGS) $(STDFLAGS) $(OPTIMIZE)
 ALL_CFLAGS   = $(strip $(DEFINES) $(CFLAGS) $(SDL_CFLAGS))
-HELP_CFLAGS  = -DHAVE_CONFIG_H $(CFLAGS)
+HELP_CFLAGS  = $(CFLAGS)
 LDFLAGS      =
 LIBS         = -lm
 
