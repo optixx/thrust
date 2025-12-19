@@ -9,7 +9,6 @@
 #define maxlenx ((word)BBILDX*12) /*max 48 skärmar a 41*23 tecken a */
 #define maxleny ((word)BBILDY*4) /* 8*8 pixels a 8 bitar, dvs. 3274752 bytes.*/
 
-#ifdef __STDC__
 void writeblock(word bx, word by, byte block);
 void drawteleline(int round, int x1, int y1, int x2, int y2, int j, int k);
 void drawteleport(int tohere);
@@ -30,6 +29,4 @@ word drawshuttle(void);
 void undrawshuttle(void);
 void drawfuellines(void);
 void undrawfuellines(void);
-#endif
-
 #endif /* GRAPHICS_H */

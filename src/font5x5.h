@@ -12,11 +12,9 @@ extern byte font[256][6];
 
 extern byte chcolor, chpaper, chflag;
 
-#ifdef __STDC__
 void printgc(int x, int y, byte ch);
 int printgs(int x, int y, char *string);
 int readgs(int x, int y, char string[], int maxc, int maxp, char flag);
 int gstrlen(char *string);
-#endif
 
 #endif /* FONT5X5_H */

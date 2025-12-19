@@ -6,7 +6,6 @@
 
 #include "thrust_t.h"
 
-#ifdef __STDC__
 void clearscr(void);
 void putarea(byte *source,
 	     int x, int y, int width, int height, int bytesperline,
@@ -23,6 +22,5 @@ void graphics_preinit(void);
 int graphicsinit(int argc, char **argv);
 int graphicsclose(void);
 char *graphicsname(void);
-#endif
 
 #endif

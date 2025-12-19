@@ -7,10 +7,8 @@
 extern int scancode[];
 extern char *keynames[];
 
-#ifdef __STDC__
 void initkeys(void);
 void conf(void);
 int getscancode(int old, int x, int y);
-#endif
 
 #endif /* CONF_H */

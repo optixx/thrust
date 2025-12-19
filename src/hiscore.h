@@ -15,13 +15,11 @@ typedef struct {
 
 extern highscoreentry highscorelist[HIGHSCORES];
 
-#ifdef __STDC__
 void writehighscores(void);
 int readhighscores(void);
 char *standardname(void);
 int inithighscorelist(void);
 int ahighscore(int score);
 void inserthighscore(char *name, int score);
-#endif
 
 #endif /* HISCORE_H */

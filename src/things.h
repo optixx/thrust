@@ -68,7 +68,6 @@ extern word powerplant;
 extern word ppx, ppy, ppcount;	/* Power Plant variables */
 extern word ppblip;
 
-#ifdef __STDC__
 void newslider(int x, int y, int type);
 int majorbutton(int button);
 void newthing(int x, int y, int px, int py, int type, void *data);
@@ -93,6 +92,5 @@ void explodething(thing *thingptr);
 void explodeship(void);
 void movefragments(void);
 word livefragments(void);
-#endif
 
 #endif /* THINGS_H */

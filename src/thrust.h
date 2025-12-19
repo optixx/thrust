@@ -116,7 +116,6 @@ extern int skip_frames;
 #define SCORETEXT (35)
 #define SCORENAME (36)
 
-#ifdef __STDC__
 int insideblock(int blockx, int blocky,
 		int pblockx, int pblocky, int sx, int sy);
 int insidepixel(int x, int y, int pixx, int pixy, int sx, int sy);
@@ -138,6 +137,4 @@ char *enterhighscorename(void);
 int showhighscores(void);
 void newhighscore(void);
 options menu(void);
-#endif
-
 #endif /* THRUST_H */

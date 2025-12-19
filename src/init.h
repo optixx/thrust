@@ -6,7 +6,6 @@
 
 #include "thrust_t.h"
 
-#ifdef __STDC__
 void turnship(void);
 void makeshieldedship(void);
 void makefuelmap(byte *fuelmap);
@@ -18,6 +17,5 @@ int initsoundIt(void);
 void restoresoundIt(void);
 void restorehardware(void);
 void restoremem(void);
-#endif
 
 #endif /* INIT_H */

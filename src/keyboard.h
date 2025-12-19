@@ -15,7 +15,6 @@ enum {
   quit_bit  =1<<7
 };
 
-#ifdef __STDC__
 void singlekey(void);
 void multiplekeys(void);
 int getonemultiplekey(void);
@@ -28,6 +27,5 @@ int keywaiting(void);
 int keyinit(void);
 int keyclose(void);
 char *keyname(void);
-#endif
 
 #endif

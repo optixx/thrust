@@ -13,7 +13,6 @@
 #define PUSEX	(PBILDX-8)
 #define PUSEY	(PBILDY-8)
 
-#ifdef __STDC__
 void putscr(int x, int y, int force_draw);
 void putblock(int x, int y, byte *source);
 void drawfuel(int fuel);
@@ -26,7 +25,6 @@ void undrawsquare(word bx, word by,
 		  byte *storage,
 		  byte deltax, byte deltay);
 word testcrash(byte *object, byte *storage, word len, byte shield);
-#endif
 
 extern byte *bild;
 
