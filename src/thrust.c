@@ -1135,35 +1135,10 @@ main(int argc, char **argv)
       { 0, 0, 0, 0 }
     };
 
-    optc=getopt_long_only(argc, argv, OPTC SDL_OPTC, longopts, (int *) 0);
+    optc=getopt_long_only(argc, argv, OPTC, longopts, (int *) 0);
     switch(optc) {
-    case 'e':      /* --nosoundeffects */
-      play_sound=0;
-      break;
     case 'd':      /* --nodemo */
       nodemo=1;
-      break;
-    case 'c':      /* --gamma */
-      {
-        char *end;
-        double tmp;
-
-        if(*optarg) {
-          tmp = strtod(optarg, &end);
-          if(*end || tmp==HUGE_VAL || tmp<=0.0)
-            tmp = 0.0;
-        }
-        else
-          tmp = 0.0;
-
-        if(tmp == 0.0)
-          printf("Illegal gamma correction value: \"%s\"\n", optarg);
-        else
-          gamma_correction = tmp;
-      }
-      break;
-    case 'j':      /* --step */
-      skip_frames = 1;
       break;
     case 'z':      /* --zoom */
       {
@@ -1185,9 +1160,6 @@ main(int argc, char **argv)
            "  -v, --version\n"
            "  -h, --help\n"
            "  -d, --nodemo           Do not run the demo.\n"
-           "  -e, --nosoundeffects   Do not play sound effects.\n"
-           "  -c, --gamma=Value      Gamma correction of colors.\n"
-           "  -j, --step             Only draw every third frame (faster).\n"
            "  -z, --zoom=1..6        Scale the window by an integer factor.\n");
     printf("\n");
     exit(1);
