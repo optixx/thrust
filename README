@@ -1,31 +1,21 @@
 
 Thrust
 
-I started to code Thrust for MSDOG but later I had a revelation so now it is
-converted to X and Linux/SVGAlib. Nowadays it is also converted to Windows
-(DirectX) and SDL.
-
-This copy of the source tree now only maintains the SDL1.2 port that compiles
-on modern macOS. The legacy SVGA, X11, and DirectX backends have been removed.
+This repository now maintains the modern SDL2-based port of Thrust on macOS. All of the legacy SVGA, X11, DirectX, and other platform-specific backends have been removed so the codebase only builds and runs with SDL2/modern macOS tooling.
 
 Build instructions:
 
-  * `make sdlthrust` – compiles the SDL1 executable (uses `sdl-config` for flags;
-    override with `SDLCONFIG=/path/to/sdl-config` if needed).
-  * `make clean` – wipes built objects and generated helper programs.
+  * `make all` – rebuilds the assets (via `helpers/asset_tool.py`) and compiles `sdlthrust`.
+  * `make clean` – deletes generated assets, object files, and the `sdlthrust` binary.
+  * Set `SDLCONFIG` to a custom `sdl2-config` if you do not want to use the system default; the makefile falls back to `/opt/homebrew` and `/Library/Frameworks` paths on macOS.
 
-Configuration defaults and keyboard mappings live in the sample `thrustrc`.
+Configuration defaults and key mappings live in the sample `thrust.rc` shipped with the project. The game looks for `thrust.rc` in the current working directory so you can clone the repo and run `./sdlthrust` alongside that file without touching your home directory.
 
-This is the game from the C64 that you cannot live without.
+SDL sound is always enabled — there is no `HAVE_SOUND` guard anymore — so the SDL mixer is the only supported sound backend.
 
-There is a web page that is supposed to be up to date. You can find it at
-http://www.lysator.liu.se/~peda/thrust/, and it should contain information
-about the latest developement. It also contains information to help you build
-your own levels.
+Additional resources:
 
-Thrust is free software. See the file COPYING for copying conditions.
+  * http://www.lysator.liu.se/~peda/thrust/ for the history of the game.
+  * `COPYING` for the full licensing conditions.
 
-Please send comments and bug reports by email to the address below.
-
-Peter Ekberg
-peda@lysator.liu.se
+Please send comments and bug reports to Peter Ekberg at peda@lysator.liu.se.
