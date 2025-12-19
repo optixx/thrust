@@ -24,7 +24,6 @@
 #include "keyboard.h"
 #include "options.h"
 
-#ifdef HAVE_SOUND
 # include "soundIt.h"
 
 # define CHAN_1 0
@@ -36,7 +35,6 @@
 # define SND_HARP   2
 # define SND_THRUST 3
 # define SND_ZERO   4
-#endif
 
 uint8_t *bulletmap;
 uint8_t *blocks;
@@ -79,7 +77,6 @@ uint8_t shield;
 uint8_t colorr, colorg, colorb;
 int nodemo=0;
 int Thrust_Is_On=0;
-int play_sound=1;
 double gamma_correction=1.0;
 int skip_frames=0;
 
@@ -437,13 +434,10 @@ game(int demo)
       }
       if(alive && (actionbits&thrust_bit)) {
         if(fuel>0) {
-#ifdef HAVE_SOUND
-          if(play_sound)
-            if(Thrust_Is_On==0) {
-              Thrust_Is_On=1;
-              Snd_effect(SND_THRUST, CHAN_1);
-            }
-#endif
+          if(Thrust_Is_On==0) {
+            Thrust_Is_On=1;
+            Snd_effect(SND_THRUST, CHAN_1);
+          }
 #if !(defined(DEBUG) || defined(DEBUG2))
           if(!easyrider)
             fuel--;
@@ -470,23 +464,17 @@ game(int demo)
           }
         }
         else {
-#ifdef HAVE_SOUND
-          if(play_sound)
-            if(Thrust_Is_On == 1) {
-              Snd_effect(SND_ZERO, CHAN_1);
-              Thrust_Is_On = 0;
-            }
-#endif
-        }
-      }
-      else {
-#ifdef HAVE_SOUND
-        if(play_sound)
           if(Thrust_Is_On == 1) {
             Snd_effect(SND_ZERO, CHAN_1);
             Thrust_Is_On = 0;
           }
-#endif
+        }
+      }
+      else {
+        if(Thrust_Is_On == 1) {
+          Snd_effect(SND_ZERO, CHAN_1);
+          Thrust_Is_On = 0;
+        }
       }
       if(actionbits&quit_bit) {
 #ifdef DEBUG2
@@ -496,12 +484,8 @@ game(int demo)
       }
 
       if(actionbits&pause_bit) {
-#ifdef HAVE_SOUND
-        if(play_sound) {
-          Thrust_Is_On=0;
-          Snd_effect(SND_ZERO, CHAN_1);
-        }
-#endif
+        Thrust_Is_On=0;
+        Snd_effect(SND_ZERO, CHAN_1);
         pause_message();
         end=NOTHING;
         flushkeyboard();
@@ -534,12 +518,8 @@ game(int demo)
           easyrider=0;
       }
       if(actionbits&escape_bit) {
-#ifdef HAVE_SOUND
-        if(play_sound) {
-          Thrust_Is_On=0;
-          Snd_effect(SND_ZERO, CHAN_1);
-        }
-#endif
+        Thrust_Is_On=0;
+        Snd_effect(SND_ZERO, CHAN_1);
         escape_message();
         end=NOTHING;
         flushkeyboard();
@@ -725,22 +705,14 @@ game(int demo)
       if(dying) {
         alive=0;
         dying=0;
-#ifdef HAVE_SOUND
-        if(play_sound) {
-          Snd_effect(SND_ZERO, CHAN_1);
-          Thrust_Is_On=0;
-          Snd_effect(SND_BOOM2, CHAN_2);
-        }
-#endif
+        Snd_effect(SND_ZERO, CHAN_1);
+        Thrust_Is_On=0;
+        Snd_effect(SND_BOOM2, CHAN_2);
         explodeship();
       }
       if(!alive && !livefragments()) {
-#ifdef HAVE_SOUND
-        if(play_sound) {
-          Snd_effect(SND_ZERO, CHAN_1);
-          Thrust_Is_On=0;
-        }
-#endif
+        Snd_effect(SND_ZERO, CHAN_1);
+        Thrust_Is_On=0;
         endlevel=1;
 #ifdef DEBUG2
         printf("Endlevel: Shit crashed.\n");
@@ -757,10 +729,7 @@ game(int demo)
       }
     }
     if(teleport) {
-#ifdef HAVE_SOUND
-      if(play_sound)
-        Snd_effect(SND_ZERO, CHAN_1);
-#endif
+      Snd_effect(SND_ZERO, CHAN_1);
       bin_colors[65*3+0]=GAMMA(colorr);
       bin_colors[65*3+1]=GAMMA(colorg);
       bin_colors[65*3+2]=GAMMA(colorb);

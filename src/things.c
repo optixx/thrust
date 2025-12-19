@@ -24,7 +24,6 @@
 #include "graphics.h"
 #include "thrust.h"
 
-#ifdef HAVE_SOUND
 # include "soundIt.h"
 
 # define CHAN_1 0
@@ -37,7 +36,6 @@
 # define SND_HARP   2
 # define SND_THRUST 3
 # define SND_ZERO   4
-#endif
 
 uint32_t nrthings=0;
 uint32_t nrsliders=0;
@@ -334,10 +332,7 @@ startupsliders(int button)
       }
     }
     else {
-#ifdef HAVE_SOUND
-      if(play_sound)
-	Snd_effect(SND_HARP, CHAN_3);
-#endif
+      Snd_effect(SND_HARP, CHAN_3);
       s->active=1;
       s->stage=0;
       s->count=0;
@@ -385,10 +380,7 @@ deletething(thing *tp)
 	(*tp).alive=1;
       else {
 	killallthings();
-#ifdef HAVE_SOUND
-	if(play_sound)
-	  Snd_effect(SND_BOOM2, CHAN_4);
-#endif
+	Snd_effect(SND_BOOM2, CHAN_4);
 	for(i=0; i<3; i++)
 	  for(j=0; j<3; j++)
 	    writeblock(tx+i, ty+j, 32);
@@ -432,10 +424,7 @@ newbullet(uint32_t x, uint32_t y, int vx, int vy, uint32_t dir, int owner)
 {
   static uint32_t nr=0;
 
-#ifdef HAVE_SOUND
-  if(play_sound)
-    Snd_effect(SND_BOOM, CHAN_2);
-#endif
+  Snd_effect(SND_BOOM, CHAN_2);
   bullets[nr].life=60;
   bullets[nr].x=x;
   bullets[nr].y=y;
@@ -601,10 +590,7 @@ hit(uint32_t x, uint32_t y, uint32_t crash, uint32_t owner)
       }
     }
   if(hit) {
-#ifdef HAVE_SOUND
-    if(play_sound)
-      Snd_effect(SND_BOOM2, CHAN_4);
-#endif
+    Snd_effect(SND_BOOM2, CHAN_4);
     explodething(&things[which]);
   }
   if(things[which].alive == 1)  /* Can't kill a dying thing */

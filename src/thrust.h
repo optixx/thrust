@@ -36,7 +36,6 @@ extern char *level5[];
 extern char *level6[];
 
 
-#ifdef HAVE_SOUND
 extern uint8_t sound_boom[];
 extern uint8_t sound_boom2[];
 extern uint8_t sound_harp[];
@@ -47,7 +46,6 @@ extern unsigned int  sound_boom2_len;
 extern unsigned int  sound_harp_len;
 extern unsigned int  sound_thrust_len;
 extern unsigned int  sound_zero_len;
-#endif
 
 typedef enum { INST, PLAY, HI, ABOUT, END, CONF, NOTHING, DEMO } options;
 
@@ -77,8 +75,8 @@ extern uint8_t *fuelstorage;
 extern uint8_t *loadstorage;
 extern uint8_t *wirestorage;
 
-extern uint32_t lenx; /* Banans max i x-len, används senare till den aktuella */
-extern uint32_t leny; /* Banans max i y-len, storleken på banan.Sätts i readbana */
+extern uint32_t lenx; /* Banans max i x-len, anvï¿½nds senare till den aktuella */
+extern uint32_t leny; /* Banans max i y-len, storleken pï¿½ banan.Sï¿½tts i readbana */
 extern uint32_t lenx3,leny3;
 
 extern double alpha,deltaalpha;
@@ -102,7 +100,6 @@ extern int gravity;
 extern int score;
 extern uint8_t shield;
 extern uint8_t colorr, colorg, colorb;
-extern int play_sound;
 extern double gamma_correction;
 extern int skip_frames;
 

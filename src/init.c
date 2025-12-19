@@ -147,12 +147,8 @@ initmem(void)
 void
 inithardware(int argc, char **argv)
 {
-  if(play_sound) {
-    if(initsoundIt())
-      play_sound=0;
-    else
-      play_sound=1;
-  }
+  if(initsoundIt())
+    printf("No sound.\n");
 
   if(graphicsinit(window_zoom))
     exit(-1);
@@ -313,8 +309,7 @@ restorehardware(void)
 
   graphicsclose();
 
-  if(play_sound)
-    Snd_restore();
+  Snd_restore();
 }
 
 void
