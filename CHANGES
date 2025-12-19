@@ -1,3 +1,11 @@
+Version 0.90 December 19, 2025
+
+* Consolidated the build to the SDL2/macOS-only target: the Makefile now only builds `sdlthrust`, removes legacy `install/TAGS/DVI` targets, keeps the asset pipeline intact, and hardcodes SDL2 as the linker dependency.
+* Always initialize SDL sound, eliminate the old `HAVE_SOUND` preprocessor guards, and drop the `play_sound` flag so the SDL mixer is the single sound path.
+* Modernized configuration loading: `conf.c` now reads `thrust.rc` from the executable directory, logs loading/parsing progress, and only understands SDL-based entries, while `SDLkey.c` feeds SDL names/codes back to the configuration screen.
+* Reworked the SDL input stack so `wait_for_key()` returns SDL2 keycodes, `SDLkey` helpers translate to/from SDL names, and the main loop uses plain SDL event handling with constant frame pacing; the sample `thrust.rc` now ships beside the game.
+
+
 Version 0.89c-sdl1-current
 
 * Renamed `datasrc/` to `assets/` and updated the Makefile to match the new layout.
