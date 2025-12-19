@@ -3,13 +3,16 @@
 SHELL        = /bin/sh
 INSTALL      = /usr/bin/install -c
 CC ?= gcc
-SDLCONFIG ?= sdl-config
+SDLCONFIG ?= sdl2-config
 PYTHON ?= python3
 ASSET_TOOL := $(PYTHON) helpers/asset_tool.py
 SDL_CFLAGS := $(shell $(SDLCONFIG) --cflags 2>/dev/null)
 SDL_LIBS := $(shell $(SDLCONFIG) --libs 2>/dev/null)
 ifeq ($(strip $(SDL_LIBS)),)
-SDL_LIBS = -lSDL
+SDL_LIBS = -L/opt/homebrew/lib -lSDL2
+endif
+ifeq ($(strip $(SDL_CFLAGS)),)
+SDL_CFLAGS = -I/opt/homebrew/include/SDL2 -I/opt/homebrew/include -I/Library/Frameworks/SDL2.framework/Headers
 endif
 SDL_INCLUDE_FLAG := $(firstword $(filter -I%, $(SDL_CFLAGS)))
 SDL_INC_DIR := $(patsubst -I%,%,$(SDL_INCLUDE_FLAG))

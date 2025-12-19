@@ -1,163 +1,127 @@
-// sdl input for thrust
-// (adapted from tank [ https://github.com/himdel/tank/ ])
-// output in sdl.c
+// SDL2 input for thrust
+// output handled in SDL.c
 
-// Written by Martin Hradil, himdel@seznam.cz
+#include <string.h>
 
-#include <SDL/SDL.h>
-#include <SDL/SDL_keysym.h>
+#include <SDL.h>
 #include "thrust.h"
 #include "keyboard.h"
 
 // left, right, thrust, fire, pick (, quit, pause, continue)
 int scancode[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-static int keyz[SDLK_LAST];
-
+static int keyz[SDL_NUM_SCANCODES];
 
 // key driver name
 char *
 keyname(void)
 {
-	static char name[] = "SDL";
-	return name;
+  static char name[] = "SDL2";
+  return name;
 }
 
-// init key system
 int
 keyinit(void)
 {
-	flushkeyboard();
-	return 0;
+  flushkeyboard();
+  return 0;
 }
 
-// close, empty
 int
 keyclose(void)
 {
-	return 0;
+  return 0;
 }
 
-// stub, non-default keys not implemented
 char *
 keystring(int key)
 {
-	switch (key) {
-		case SDLK_UP:
-			return "Up";
-		case SDLK_DOWN:
-			return "Down";
-		case SDLK_RETURN:
-			return "Enter";
-		case SDLK_ESCAPE:
-			return "Escape";
-		default:
-			return "unknown";
-	}
+  const char *name = SDL_GetScancodeName((SDL_Scancode)key);
+  return (char *)(name && *name ? name : "unknown");
 }
 
-// stub, non-default keys not implemented
 int
 keycode(char *keyname)
 {
-	return 0;
+  SDL_Scancode sc = SDL_GetScancodeFromName(keyname);
+  if(sc == SDL_SCANCODE_UNKNOWN)
+    return 0;
+  return (int)sc;
 }
 
-// read keypress and update array
-static int
-update_keys(int retdown)
-{
-	SDL_Event ev;
-	while (SDL_PollEvent(&ev)) {
-		switch (ev.type) {
-			case SDL_KEYDOWN:
-				keyz[ev.key.keysym.sym] = 1;
-				if (retdown)
-					return ev.key.keysym.sym;
-				break;
-			case SDL_QUIT:
-				keyz[SDLK_ESCAPE] = 1;
-				if (retdown)
-					return SDLK_ESCAPE;
-				break;
-			case SDL_KEYUP:
-				keyz[ev.key.keysym.sym] = 0;
-				break;
-		}
-	}
-	return 0;
-}
-
-// read one keypress
 int
 getkey(void)
 {
-	return update_keys(1);
+  SDL_Event ev;
+
+  while(SDL_WaitEvent(&ev)) {
+    if(ev.type == SDL_KEYDOWN) {
+      return (int)ev.key.keysym.sym;
+    } else if(ev.type == SDL_QUIT) {
+      return SDLK_ESCAPE;
+    }
+  }
+  return 0;
 }
 
-// return key status in a byte
 byte
 getkeys(void)
 {
-	byte keybits = 0;
+  const Uint8 *state;
+  byte keybits = 0;
 
-	update_keys(0);
+  SDL_PumpEvents();
+  state = SDL_GetKeyboardState(NULL);
 
-	if (keyz[SDLK_p])
-		keybits |= pause_bit;
-	if (keyz[SDLK_q] || keyz[SDLK_ESCAPE])
-		keybits |= escape_bit;
+  if(state[SDL_SCANCODE_P])
+    keybits |= pause_bit;
+  if(state[SDL_SCANCODE_Q] || state[SDL_SCANCODE_ESCAPE])
+    keybits |= escape_bit;
 
-	if (keyz[SDLK_a])
-		keybits |= left_bit;
-	if (keyz[SDLK_s])
-		keybits |= right_bit;
-	if (keyz[SDLK_LCTRL] || keyz[SDLK_RCTRL])
-		keybits |= thrust_bit;
-	if (keyz[SDLK_RETURN])
-		keybits |= fire_bit;
-	if (keyz[SDLK_SPACE])
-		keybits |= pickup_bit;
+  if(state[SDL_SCANCODE_A] || state[SDL_SCANCODE_LEFT])
+    keybits |= left_bit;
+  if(state[SDL_SCANCODE_S] || state[SDL_SCANCODE_RIGHT])
+    keybits |= right_bit;
+  if(state[SDL_SCANCODE_LCTRL] || state[SDL_SCANCODE_RCTRL] || state[SDL_SCANCODE_UP])
+    keybits |= thrust_bit;
+  if(state[SDL_SCANCODE_RETURN])
+    keybits |= fire_bit;
+  if(state[SDL_SCANCODE_SPACE])
+    keybits |= pickup_bit;
 
-	return keybits;
+  return keybits;
 }
 
-// set singlekey mode, stub
 void
 singlekey(void)
 {
 }
 
-// set multikey mode, stub
 void
 multiplekeys(void)
 {
 }
 
-// get one key
 int
 getonemultiplekey(void)
 {
-	return getkey();
+  return getkey();
 }
 
-// flush keyboard
 void
 flushkeyboard(void)
 {
-	update_keys(0);
-	int foo;
-	for (foo = 0; foo < SDLK_LAST; foo++)
-		keyz[foo] = 0;
+  SDL_PumpEvents();
+  SDL_FlushEvents(SDL_KEYDOWN, SDL_KEYUP);
+  memset(keyz, 0, sizeof keyz);
 }
 
-// is a key waiting
 int
 keywaiting(void)
 {
-	update_keys(0);
-	int foo;
-	for (foo = 0; foo < SDLK_LAST; foo++)
-		if (keyz[foo])
-			return 1;
-	return 0;
+  SDL_Event ev;
+
+  SDL_PumpEvents();
+  if(SDL_PeepEvents(&ev, 1, SDL_PEEKEVENT, SDL_KEYDOWN, SDL_KEYDOWN) > 0)
+    return 1;
+  return 0;
 }

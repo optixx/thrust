@@ -1,18 +1,12 @@
-// sdl output for thrust
-// (adapted from tank [ https://github.com/himdel/tank/ ])
-// input in sdlkey.c
+// SDL2 output for thrust
+// input handled in SDLkey.c
 
-// Written by Martin Hradil, himdel@seznam.cz
-
-#include <stdlib.h>
-#include <stdlib.h>
 #include <assert.h>
-#include <unistd.h>
-#include <sys/time.h>
-
+#include <stdlib.h>
 #include <getopt.h>
 
-#include <SDL/SDL.h>
+#include <SDL.h>
+
 #include "thrust.h"
 #include "graphics.h"
 #include "options.h"
@@ -21,203 +15,225 @@ static const int X = 320;
 static const int Y = 200;
 static int double_size = 0;
 
-static SDL_Surface *scr = NULL;
+static SDL_Window *window = NULL;
+static SDL_Renderer *renderer = NULL;
+static SDL_Texture *texture = NULL;
+static Uint8 *framebuffer = NULL;   /* indexed pixels */
+static Uint32 *rgba_buffer = NULL;  /* converted for texture upload */
+static SDL_Color palette[256];
 
+static void
+update_palette_from_table(int first, int last, byte *RGBtable)
+{
+  int n = last - first + 1;
+  int i;
 
-// used for output-specific options
+  for(i = 0; i < n; i++) {
+    palette[first + i].r = RGBtable[3 * i + 0];
+    palette[first + i].g = RGBtable[3 * i + 1];
+    palette[first + i].b = RGBtable[3 * i + 2];
+    palette[first + i].a = 0xff;
+  }
+}
+
+static void
+ensure_buffers(void)
+{
+  if(framebuffer == NULL)
+    framebuffer = (Uint8 *)calloc(X * Y, 1);
+  if(rgba_buffer == NULL)
+    rgba_buffer = (Uint32 *)calloc(X * Y, sizeof(Uint32));
+}
+
 char *
 graphicsname(void)
 {
-	static char name[] = "SDL";
-	return name;
+  static char name[] = "SDL2";
+  return name;
 }
 
-// run before init, empty
 void
 graphics_preinit(void)
 {
-	;
+  /* Nothing needed for SDL2 */
 }
 
-// parse options, init graphics
 int
 graphicsinit(int argc, char **argv)
 {
-	int optc;
+  int optc;
 
-	optind = 0;		// reset getopt parser
-	do {
-		static struct option longopts[] = {
-			OPTS,
-			SDL_OPTS,
-			{ 0, 0, 0, 0 }
-		};
+  optind = 0; /* reset getopt parser */
+  do {
+    static struct option longopts[] = {
+      OPTS,
+      SDL_OPTS,
+      { 0, 0, 0, 0 }
+    };
 
-		optc = getopt_long_only(argc, argv, OPTC SDL_OPTC, longopts, (int *) 0);
-		if (optc == '2')
-			double_size = 1;
-	} while (optc != EOF);
+    optc = getopt_long_only(argc, argv, OPTC SDL_OPTC, longopts, (int *) 0);
+    if(optc == '2')
+      double_size = 1;
+  } while(optc != EOF);
 
-	if (SDL_Init(SDL_INIT_VIDEO) == -1) {
-		fprintf(stderr, "SDL_Init: %s\n", SDL_GetError());
-		return -1;
-	}
+  if(SDL_Init(SDL_INIT_VIDEO) != 0) {
+    fprintf(stderr, "SDL_Init: %s\n", SDL_GetError());
+    return -1;
+  }
 
-	SDL_WM_SetCaption("thrust", "thrust");
+  window = SDL_CreateWindow("thrust",
+                            SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                            X * (double_size ? 2 : 1),
+                            Y * (double_size ? 2 : 1),
+                            SDL_WINDOW_SHOWN);
+  if(!window) {
+    fprintf(stderr, "SDL_CreateWindow: %s\n", SDL_GetError());
+    return -1;
+  }
 
-	scr = SDL_SetVideoMode(X * (double_size ? 2 : 1), Y * (double_size ? 2 : 1), 8, SDL_SWSURFACE);
-	assert(scr);
+  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE | SDL_RENDERER_PRESENTVSYNC);
+  if(!renderer) {
+    fprintf(stderr, "SDL_CreateRenderer: %s\n", SDL_GetError());
+    return -1;
+  }
+  SDL_RenderSetLogicalSize(renderer, X, Y);
 
-	return 0;
+  texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
+                              SDL_TEXTUREACCESS_STREAMING, X, Y);
+  if(!texture) {
+    fprintf(stderr, "SDL_CreateTexture: %s\n", SDL_GetError());
+    return -1;
+  }
+
+  ensure_buffers();
+  update_palette_from_table(0, 255, bin_colors);
+
+  return 0;
 }
 
-// close graphics
 int
 graphicsclose(void)
 {
-	SDL_Quit();
-	scr = NULL;
+  if(texture)
+    SDL_DestroyTexture(texture);
+  if(renderer)
+    SDL_DestroyRenderer(renderer);
+  if(window)
+    SDL_DestroyWindow(window);
+  texture = NULL;
+  renderer = NULL;
+  window = NULL;
 
-	return 0;
+  free(framebuffer);
+  free(rgba_buffer);
+  framebuffer = NULL;
+  rgba_buffer = NULL;
+
+  SDL_Quit();
+  return 0;
 }
 
-// clear screen
 void
 clearscr(void)
 {
-	if (SDL_MUSTLOCK(scr))
-		SDL_LockSurface(scr);
-
-	int x, y;
-	for (x = 0; x < X; x++)
-		for (y = 0; y < Y; y++)
-			putpixel(x, y, 0);
-
-	if (SDL_MUSTLOCK(scr))
-		SDL_UnlockSurface(scr);
-
-	// displayscreen does the actual repaint
-	displayscreen();
+  ensure_buffers();
+  memset(framebuffer, 0, X * Y);
+  displayscreen();
 }
 
-// flip buffer
+static void
+blit_indexed_to_texture(void)
+{
+  int i;
+  size_t total = (size_t)X * Y;
+
+  for(i = 0; i < (int)total; i++) {
+    SDL_Color c = palette[framebuffer[i]];
+    rgba_buffer[i] = ((Uint32)c.a << 24) | ((Uint32)c.r << 16) |
+                     ((Uint32)c.g << 8) | (Uint32)c.b;
+  }
+
+  SDL_UpdateTexture(texture, NULL, rgba_buffer, X * (int)sizeof(Uint32));
+}
+
 void
 displayscreen(void)
 {
-	SDL_UpdateRect(scr, 0, 0, 0, 0);
+  ensure_buffers();
+  blit_indexed_to_texture();
+  SDL_RenderClear(renderer);
+  SDL_RenderCopy(renderer, texture, NULL, NULL);
+  SDL_RenderPresent(renderer);
 }
 
-// displayscreen and wait
 void
 syncscreen(void)
 {
-	struct timeval tmp;
-	static int old = -1;
+  static Uint32 last = 0;
+  Uint32 now = SDL_GetTicks();
 
-	if (old == -1) {
-		gettimeofday(&tmp, NULL);
-		old = tmp.tv_usec;
-	}
+  if(last != 0) {
+    Uint32 elapsed = now - last;
+    if(elapsed < 20)
+      SDL_Delay(20 - elapsed);
+  }
+  last = SDL_GetTicks();
 
-	displayscreen();
-
-	gettimeofday(&tmp, NULL);
-	int new = tmp.tv_usec;
-	int diff = (old - new + 1000000) % 1000000;
-
-	if (diff > 20000)
-		usleep(diff % 20000);
-
-	gettimeofday(&tmp, NULL);
-	old = tmp.tv_usec;
+  displayscreen();
 }
 
-// actually paints a pixel, no locking
 static void
 _putpixel(int x, int y, byte color)
 {
-	if (!double_size) {
-		// single pixel
-		*((Uint8 *) scr->pixels + (scr->pitch * y) + x) = color;
-	} else {
-		// double size
-		*((Uint8 *) scr->pixels + (scr->pitch * (2 * y)) + (2 * x)) = color;
-		*((Uint8 *) scr->pixels + (scr->pitch * (2 * y)) + (2 * x + 1)) = color;
-		*((Uint8 *) scr->pixels + (scr->pitch * (2 * y + 1)) + (2 * x)) = color;
-		*((Uint8 *) scr->pixels + (scr->pitch * (2 * y + 1)) + (2 * x + 1)) = color;
-	}
+  if(x < 0 || x >= X || y < 0 || y >= Y)
+    return;
+  framebuffer[y * X + x] = color;
 }
 
-// paint a pixel
 void
 putpixel(int x, int y, byte color)
 {
-	if (SDL_MUSTLOCK(scr))
-		SDL_LockSurface(scr);
-
-	_putpixel(x, y, color);
-
-	if (SDL_MUSTLOCK(scr))
-		SDL_UnlockSurface(scr);
+  _putpixel(x, y, color);
 }
 
-// copy an area
 void
 putarea(byte *source, int x, int y, int width, int height, int bytesperline, int destx, int desty)
 {
-	if (SDL_MUSTLOCK(scr))
-		SDL_LockSurface(scr);
+  int j, i;
 
-	int j, i;
-	for (j = 0; j < height; j++)
-		for (i = 0; i < width; i++)
-			_putpixel(destx + i, desty + j, source[bytesperline * (y + j) + x + i]);
-
-	if (SDL_MUSTLOCK(scr))
-		SDL_UnlockSurface(scr);
+  for(j = 0; j < height; j++) {
+    int dy = desty + j;
+    if(dy < 0 || dy >= Y)
+      continue;
+    for(i = 0; i < width; i++) {
+      int dx = destx + i;
+      if(dx < 0 || dx >= X)
+        continue;
+      _putpixel(dx, dy, source[bytesperline * (y + j) + x + i]);
+    }
+  }
 }
 
-// set/fade pallete
-// fade ignored for now
 void
 fadepalette(int first, int last, byte *RGBtable, int fade, int flag)
 {
-	int n = last - first + 1;
-	SDL_Color *col = calloc(n, sizeof(SDL_Color));
-
-	int foo;
-	for (foo = 0; foo < n; foo++) {
-		col[foo].r = RGBtable[3 * foo + 0];
-		col[foo].g = RGBtable[3 * foo + 1];
-		col[foo].b = RGBtable[3 * foo + 2];
-	}
-
-	SDL_SetColors(scr, col, first, n);
-	free(col);
-
-	if (flag)
-		displayscreen();
+  (void)fade; /* fade ignored */
+  update_palette_from_table(first, last, RGBtable + first * 3);
+  if(flag)
+    displayscreen();
 }
 
-// fade in gradually
 void
 fade_in(void)
 {
-	fadepalette(0, 255, bin_colors, -1, 1);
-//	for (int i = 1; i <= 64; i++)
-//		fadepalette(0, 255, bin_colors, i, 1);
-
-	displayscreen();
+  fadepalette(0, 255, bin_colors, -1, 1);
+  displayscreen();
 }
 
-// fade out gradually
 void
 fade_out(void)
 {
-	fadepalette(0, 255, bin_colors, -1, 1);
-//	for (int i = 64; i; i--)
-//		fadepalette(0, 255, bin_colors, i, 1);
-
-	clearscr();
-	usleep(500000L);
+  fadepalette(0, 255, bin_colors, -1, 1);
+  clearscr();
+  SDL_Delay(500);
 }
