@@ -20,15 +20,8 @@
 #undef HAVE_GETOPT_H
 #undef HAVE_GETOPT_LONG_ONLY
 
-#undef HAVE_RANDOM
-#undef HAVE_USLEEP
-#undef HAVE_STRDUP
-
 #undef HAVE_ATEXIT
 #undef HAVE_ON_EXIT
-
-#undef HAVE_XSHMPUTIMAGE
-
 
 #undef HAVE_SOUND
 #ifdef HAVE_SOUND
@@ -65,22 +58,5 @@
 
 #undef _POSIX_C_SOURCE
 #undef _XOPEN_SOURCE
-
-#ifndef HAVE_RANDOM
-# define random rand
-# define srandom srand
-#endif /* HAVE_RANDOM */
-
-#ifndef HAVE_USLEEP
-void usleep(unsigned long usec);
-#endif /* HAVE_USLEEP */
-
-#ifndef HAVE_STRDUP
-char *strdup(const char *s);
-#endif /* HAVE_STRDUP */
-
-#ifdef HAVE_XSHMPUTIMAGE
-# define MITSHM
-#endif
 
 #endif /* CONFIG_H */

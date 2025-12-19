@@ -1,38 +1,13 @@
 #!/usr/bin/make -f
-# Sample debian/rules that uses debhelper. GNU copyright 1997 by Joey Hess.
+# Simplified Debian rules for the SDL-only Thrust port.
 
-# Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
 export DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 export DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
-
-CFLAGS = -Wall -g
-
-ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-	CFLAGS += -O0
-else
-	CFLAGS += -O2
-endif
-ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
-	INSTALL_PROGRAM += -s
-endif
 
 build: build-stamp
 build-stamp:
 	dh_testdir
-
-	# Make sure we use the latest autotools helpers.
-	if test -f config.sub; then \
-		mv config.sub config.sub.debsave; \
-	fi
-	if test -f config.guess; then \
-		mv config.guess config.guess.debsave; \
-	fi
-	ln -sf /usr/share/misc/config.sub .
-	ln -sf /usr/share/misc/config.guess .
-	CFLAGS="$(CFLAGS)" ./configure --prefix=/usr --exec-prefix=/usr \
-		--sharedstatedir=/var/games --bindir=/usr/games \
-		--mandir=/usr/share/man
+	dh_testroot
 	$(MAKE)
 	touch build-stamp
 
@@ -40,54 +15,21 @@ clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp
-	-$(MAKE) -i distclean
+	dh_clean
 
-	if test -L config.sub; then \
-		$(RM) config.sub; \
-		if test -e config.sub.debsave; then \
-			mv config.sub.debsave config.sub; \
-		fi; \
-        fi
-	if test -L config.guess; then \
-		$(RM) config.guess; \
-		if test -e config.guess.debsave; then \
-			mv config.guess.debsave config.guess; \
-		fi; \
-	fi
-
-	dh_clean debian/menu config.cache config.log config.status
-
-# Build architecture-independent files here.
 binary-indep: build
-# We have nothing to do by default.
 
-# Build architecture-dependent files here.
 binary-arch: build
-#	dh_testversion
 	dh_testdir
 	dh_testroot
 	dh_clean -k
 	dh_installdirs usr/share/man/man6 var/games usr/share/pixmaps
 	$(MAKE) DEB=debian/tmp install
 	$(MAKE) DEB=debian/tmp install-man
-	dh_link usr/share/man/man6/thrust.6 usr/share/man/man6/xthrust.6
-	dh_link usr/share/man/man6/thrust.6 usr/share/man/man6/sdlthrust.6
-
-	# Build the menu file on the fly, depending on what thrust binaries
-	# are present.
 	-rm -f debian/menu
 	touch debian/menu
-	if [ -x debian/tmp/usr/games/thrust ] ; then \
-		echo "?package(thrust):needs=\"vc\" section=\"Games/Arcade\" title=\"Thrust (SVGALib)\" command=\"/usr/games/thrust\" icon=\"/usr/share/pixmaps/thrust.xpm\"" >> \
-		debian/menu ;\
-	fi
-	if [ -x debian/tmp/usr/games/xthrust ] ; then \
-		echo "?package(thrust):needs=\"x11\" section=\"Games/Arcade\" title=\"Thrust (X)\" command=\"/usr/games/xthrust\" icon=\"/usr/share/pixmaps/thrust.xpm\"" >> \
-		debian/menu ;\
-	fi
 	if [ -x debian/tmp/usr/games/sdlthrust ] ; then \
-		echo "?package(thrust):needs=\"x11\" section=\"Games/Arcade\" title=\"Thrust (SDL)\" command=\"/usr/games/sdlthrust\" icon=\"/usr/share/pixmaps/thrust.xpm\"" >> \
-		debian/menu ;\
+		echo "?package(thrust):needs=\"x11\" section=\"Games/Arcade\" title=\"Thrust (SDL)\" command=\"/usr/games/sdlthrust\" icon=\"/usr/share/pixmaps/thrust.xpm\"" >> debian/menu ;\
 	fi
 	mkdir -p debian/tmp/usr/share/lintian/overrides
 	cp debian/thrust.lintian debian/tmp/usr/share/lintian/overrides/thrust
@@ -95,26 +37,17 @@ binary-arch: build
 	dh_installdocs README TODO
 	dh_installexamples
 	dh_installmenu
-#	dh_installinit
 	dh_installcron
 	dh_installmanpages
-#	dh_undocumented
 	dh_installchangelogs CHANGES
 	dh_strip
 	dh_compress
 	dh_fixperms
-	# Don't die if these operations fail (binaries might not all be
-	# present on some architectures.)
 	-chown root.games debian/tmp/usr/games/sdlthrust
 	-chmod g+s debian/tmp/usr/games/sdlthrust
-	-chown root.games debian/tmp/usr/games/xthrust
-	-chmod g+s debian/tmp/usr/games/xthrust
-	-chown root.games debian/tmp/usr/games/thrust
-	-chmod ug+s debian/tmp/usr/games/thrust
 	dh_installdeb
 	dh_shlibdeps
 	dh_gencontrol
-#	dh_makeshlibs
 	dh_md5sums
 	dh_builddeb
 

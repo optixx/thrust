@@ -1160,18 +1160,12 @@ main(int argc, char **argv)
   do {
     static struct option longopts[] = {
       OPTS,
-      SVGA_OPTS,
-      X_OPTS,
       SDL_OPTS,
       { 0, 0, 0, 0 }
     };
 
-    optc=getopt_long_only(argc, argv, OPTC SVGA_OPTC X_OPTC SDL_OPTC, longopts, (int *) 0);
+    optc=getopt_long_only(argc, argv, OPTC SDL_OPTC, longopts, (int *) 0);
     switch(optc) {
-    case 's':      /* --svgamode */
-    case 'm':      /* --noshm */
-    case 'X':      /* -display */
-    case 'g':      /* -geometry */
     case '2':      /* --double */
       break;
     case 'e':      /* --nosoundeffects */
@@ -1215,18 +1209,7 @@ main(int argc, char **argv)
              "  -e, --nosoundeffects   Do not play sound effects.\n"
              "  -c, --gamma=Value      Gamma correction of colors.\n"
              "  -j, --step             Only draw every third frame (faster).\n");
-      if(!strcmp(graphicsname(), "SVGA")) {
-        printf("  -s, --svgamode=MODE    The format of MODE is G<width>x<height>x<colors>\n");
-      }
-      if(!strcmp(graphicsname(), "X11")) {
-        printf("  -m, --noshm            Do not use shared memory (slower).\n"
-               "  -2, --double           Double the size of the window (slower).\n"
-               "  -display display-name  See the X man page for details.\n"
-               "  -geometry geom-spec    See the X man page for details.\n");
-      }
-      if(!strcmp(graphicsname(), "SDL")) {
-        printf("  -2, --double           Double the size of the window (slower).\n");
-      }
+      printf("  -2, --double           Double the size of the window (slower).\n");
       printf("\n");
       exit(1);
     case 'v':      /* --version */

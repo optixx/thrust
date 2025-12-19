@@ -5,6 +5,9 @@ I started to code Thrust for MSDOG but later I had a revelation so now it is
 converted to X and Linux/SVGAlib. Nowadays it is also converted to Windows
 (DirectX) and SDL.
 
+This copy of the source tree now only maintains the SDL1.2 port that compiles
+on modern macOS. The legacy SVGA, X11, and DirectX backends have been removed.
+
 This is the game from the C64 that you cannot live without.
 
 See the file INSTALL for building and installation instructions.

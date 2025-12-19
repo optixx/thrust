@@ -13,17 +13,6 @@
       { "gamma",          required_argument, 0, 'c' }, \
       { "step",           no_argument,       0, 'j' }
 
-#define SVGA_OPTC "s:"
-#define SVGA_OPTS \
-      { "svgamode",       required_argument, 0, 's' }
-
-#define X_OPTC "mX:g:2"
-#define X_OPTS \
-      { "noshm",          no_argument,       0, 'm' }, \
-      { "display",        required_argument, 0, 'X' }, \
-      { "geometry",       required_argument, 0, 'g' }, \
-      { "double",         no_argument,       0, '2' }
-
 #define SDL_OPTC "2"
 #define SDL_OPTS \
       { "double",         no_argument,       0, '2' }

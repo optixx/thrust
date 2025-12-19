@@ -1,117 +1,30 @@
-
-This file describes how to build and install thrust.
-
-If you have Windows, see the file README.Win32 instead. Note, this file is
-in the directory "DirectX" in the source distribution.
-
-If you have the binary distribution, skip to 4.
-
-
+This file describes how to build and install thrust in the SDL1-only port.
 
 1. What you need to build and install thrust
 
-  * You will need a ANSI C compiler.
-  * You will need a make that can handle text transforming functions, e.g the
-    GNU Make utility.
-  * You will also need one or more of X, SVGAlib 1.2 (or later) and SDL v1.2
-    to compile the source. The X version of the game will only run on 8 bpp
-    pseudocolor visuals.
-  * Root permissions so that SVGAlib can open the graphics display. No root
-    access needed for the X version.
+  * An ANSI C compiler.
+  * GNU make (it can run the helper programs that transform the data files).
+  * SDL v1.2 development headers and libraries; the build uses `sdl-config` to find the right flags.
+    If `sdl-config` is not installed, set `SDLCONFIG=/path/to/sdl-config` before running `make`.
+  * Pod2man (part of Perl) to regenerate the man page from `thrust.pod` if you ever edit it.
+  * The netpbm tools if you need to rebuild any of the Pictures-to-C conversions under `datasrc`.
 
-  Some files are prebuilt in the distribution, but if you would like to change
-  anything in the source of these files you will need the following to rebuild
-  these files
+2. Building thrust
 
-  * pod2man is used to build the man-page from the pod file. pod2man is a part
-    of perl. Version 5.001 of perl is known to work.
-  * The netpbm package so that the small utility based on it the can be
-    compiled. The small utility is used to transform the graphics of the
-    titlescreen to a C data structure which can be compiled into the program.
+  * Run `make sdlthrust` to compile the single supported target. Pass `SOUND=yes` if you need to rebuild
+    the sound tables as well.
+  * Helper targets such as `make clean`, `make distclean`, and `make dist` still exist to tidy or
+    package the source tree.
 
-2. Configuring thrust
+3. Installing thrust
 
-  A configure script is included, configure with:
+  * Type `sudo make install` to drop `sdlthrust` into `/usr/local/bin` (or set `prefix`/`bindir` in
+    the Makefile if you prefer another location).
+  * Run `sudo make install-man` to install the man page under `/usr/local/share/man/man6`.
+  * The highscore file defaults to `/usr/local/com/thrust.highscore`; the directory is created if it
+    does not exist.
 
-      ./configure
+4. Ship it
 
-  Note that the binary distribution is built with:
-
-      ./configure --bindir=/usr/local/games --sharedstatedir=/var/games
-
-  The configure script takes the following arguments:
-
-  Configuration:
-    --cache-file=FILE       cache test results in FILE
-    --help                  prints a help message
-    --no-create             do not create output files
-    --quiet, --silent       do not print `checking...' messages
-    --version               the version of autoconf that created configure
-  Directory and file names:
-    --prefix=PREFIX         install architecture-independent files in PREFIX
-                            [/usr/local]
-    --exec-prefix=EPREFIX   install architecture-dependent files in EPREFIX
-                            [same as prefix]
-    --bindir=DIR            user executables in DIR [EPREFIX/bin]
-    --sharedstatedir=DIR    modifiable architecture-independent data in DIR
-                            [PREFIX/com]
-    --mandir=DIR            man documentation in DIR [PREFIX/man]
-  Features and packages:
-    --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
-    --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --enable and --with options recognized:
-    --enable-sound          try to include sound
-    --with-x                use the X Window System
-    --x-includes=DIR        X include files are in DIR
-    --x-libraries=DIR       X library files are in DIR
-    --with-svga             use SVGAlib
-    --enable-svga-includes=DIR
-                            SVGAlib include files are in DIR
-    --enable-svga-libraries=DIR
-                            SVGAlib library files are in DIR
-    --with-pbm              use pbm, required to rebuild datasrc/title.c
-    --enable-pbm-includes=DIR
-                            pbm include files are in DIR
-    --enable-pbm-libraries=DIR
-                            pbm library files are in DIR
-
-3. Building thrust
-
-  * In the directory that this file is in, type `make'. This will build one or
-    more of `thrust', `xthrust' and `sdlthrust', depending on how thrust was
-    configured.
-  * At the top of the file `src/thrust.h' the speed of the game and the
-    relative weight of the blob can be changed. You can fiddle with these
-    settings if you are not satisfied with the feel of the steering.
-
-4. Installing thrust
-
-  * Become root.
-  * Then as root, type `make install'. This will copy one or more of the
-    programs `thrust', `xthrust' and `sdlthrust' to `--bindir'. For the binary
-    distribution, both programs are copied to /usr/local/games/. When `thrust'
-    is installed, the setuid flag will be set as is required by all SVGAlib
-    programs. You will want thrust, xthrust and sdlthrust to have write access
-    to the highscore file. This can be solved in two ways (at least). The
-    simplest way is to give everybody write access to the file (chmod ugo=rw).
-    A slightly more refined way is to set the sgid flag on thrust, xthrust and
-    sdlthrust (chmod g+s) and then make thrust, xthrust, sdlthrust and the
-    highscore file belong to the same group (chgrp). When doing it this way,
-    there is no need for the highscore file to be world writeable (chmod ug=rw).
-    The second approach is the one taken by `make install'. The binary
-    distribution installs the highscore file as `/var/games/thrust.highscore'.
-    The highscore file will be created with the correct permissions if it does
-    not exist. In case it does exist, it isn't touched, and you may have to set
-    up its permissions by hand in order for it to work as intended.
-  * Also type `make install-man' to install a man page in section 6 (games).
-    For the binary distribution, this is installed in `/usr/local/man/man6/'.
-  * If you have the binary distribution and are not happy about the default
-    locations, these can easily be changed within the Makefile.
-
-Security concerns
-
-  * All programs that use SVGAlib must be started as root. Either root starts
-    the program, or the program is suid root so that everybody can run it as if
-    they were root. A normal SVGAlib application gives up its root priviliges
-    right after the graphics have been initilized. Root priviliges are given up
-    within the call to vga_init().
+  * `make dist` creates a source tarball (`thrust-0.89c.src.tar.gz`).
+  * `make bindist` creates a binary tarball containing the cleaned source tree plus the built `sdlthrust`.
