@@ -5,9 +5,7 @@
 #include "../src/config.h"
 #endif
 
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -15,6 +13,10 @@
 #include <string.h>
 
 #define BUFSIZE (2050)
+
+#ifndef PRINTF_RETURN
+#define PRINTF_RETURN -1
+#endif
 
 void quit(char *str);
 int writebuf(int flag);

@@ -5,15 +5,8 @@
 # include "config.h"
 #endif
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
-#if defined(HAVE_GETOPT_H) && defined(HAVE_GETOPT_LONG_ONLY)
-# include <getopt.h>
-#elif !defined(HAVE_GETOPT_LONG_ONLY)
-# include "getopt.h"
-#endif
+#include <unistd.h>
+#include <getopt.h>
 
 #define __USE_BSD
 #include <stdlib.h>

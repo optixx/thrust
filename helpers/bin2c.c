@@ -5,9 +5,7 @@
 # include "../src/config.h"
 #endif
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
+#include <unistd.h>
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -16,6 +14,10 @@
 #include "../src/thrust_t.h"
 
 #define LL (8)
+
+#ifndef PRINTF_RETURN
+#define PRINTF_RETURN -1
+#endif
 
 void quit(char *str);
 int writebuf(int count);

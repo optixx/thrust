@@ -5,9 +5,7 @@
 # include "config.h"
 #endif
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
+#include <unistd.h>
 
 #ifdef HAVE_VALUES_H
 # include <values.h>

@@ -5,11 +5,7 @@
 #include "../src/config.h"
 #endif
 
-#if defined(HAVE_GETOPT_H) && defined(HAVE_GETOPT_LONG_ONLY)
-# include <getopt.h>
-#elif !defined(HAVE_GETOPT_LONG_ONLY)
-# include "../src/getopt.h"
-#endif
+#include <getopt.h>
 
 #include <stdlib.h>
 #include <stdio.h>

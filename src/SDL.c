@@ -11,11 +11,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#if defined(HAVE_GETOPT_H) && defined(HAVE_GETOPT_LONG_ONLY)
-# include <getopt.h>
-#elif !defined(HAVE_GETOPT_LONG_ONLY)
-# include "getopt.h"
-#endif
+#include <getopt.h>
 
 #include <SDL/SDL.h>
 #include "thrust.h"
