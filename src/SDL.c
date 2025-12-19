@@ -13,8 +13,7 @@
 
 static const int X = 320;
 static const int Y = 200;
-static int double_size = 0;
-
+int window_zoom = 1;
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
 static SDL_Texture *texture = NULL;
@@ -67,13 +66,19 @@ graphicsinit(int argc, char **argv)
   do {
     static struct option longopts[] = {
       OPTS,
-      SDL_OPTS,
+      { "zoom",           required_argument, 0, 'z' },
       { 0, 0, 0, 0 }
     };
 
     optc = getopt_long_only(argc, argv, OPTC SDL_OPTC, longopts, (int *) 0);
-    if(optc == '2')
-      double_size = 1;
+    if(optc == 'z') {
+      int z = atoi(optarg);
+      if(z < 1)
+        z = 1;
+      if(z > 6)
+        z = 6;
+      window_zoom = z;
+    }
   } while(optc != EOF);
 
   if(SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -83,8 +88,7 @@ graphicsinit(int argc, char **argv)
 
   window = SDL_CreateWindow("thrust",
                             SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                            X * (double_size ? 2 : 1),
-                            Y * (double_size ? 2 : 1),
+                            X * window_zoom, Y * window_zoom,
                             SDL_WINDOW_SHOWN);
   if(!window) {
     fprintf(stderr, "SDL_CreateWindow: %s\n", SDL_GetError());

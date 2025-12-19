@@ -63,6 +63,7 @@ extern byte bin_blks[];
 extern byte bin_ship[];
 extern byte bin_shld[];
 extern byte bin_colors[];
+extern int window_zoom;
 extern byte bin_bullet[];
 extern byte bin_demomove[];
 

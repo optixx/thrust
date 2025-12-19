@@ -1148,17 +1148,16 @@ main(int argc, char **argv)
   int end=0;
   int optc;
 
+  window_zoom = 1;
+
   do {
     static struct option longopts[] = {
       OPTS,
-      SDL_OPTS,
       { 0, 0, 0, 0 }
     };
 
     optc=getopt_long_only(argc, argv, OPTC SDL_OPTC, longopts, (int *) 0);
     switch(optc) {
-    case '2':      /* --double */
-      break;
     case 'e':      /* --nosoundeffects */
       play_sound=0;
       break;
@@ -1187,22 +1186,32 @@ main(int argc, char **argv)
     case 'j':      /* --step */
       skip_frames = 1;
       break;
-    case 'h':      /* --help */
-      printf("Thrust: version " VERSION " -- the Game\n");
-      printf("Using %s to drive the graphics and\n"
-             "      %s to drive the keyboard.\n\n",
-             graphicsname(),
-             keyname());
-      printf("usage: thrust [OPTION]...\n\n"
-             "  -v, --version\n"
-             "  -h, --help\n"
-             "  -d, --nodemo           Do not run the demo.\n"
-             "  -e, --nosoundeffects   Do not play sound effects.\n"
-             "  -c, --gamma=Value      Gamma correction of colors.\n"
-             "  -j, --step             Only draw every third frame (faster).\n");
-      printf("  -2, --double           Double the size of the window (slower).\n");
-      printf("\n");
-      exit(1);
+    case 'z':      /* --zoom */
+      {
+        int z = atoi(optarg);
+        if(z < 1 || z > 6) {
+          printf("Zoom must be between 1 and 6.\n");
+          exit(1);
+        }
+        window_zoom = z;
+      }
+      break;
+  case 'h':      /* --help */
+    printf("Thrust: version " VERSION " -- the Game\n");
+    printf("Using %s to drive the graphics and\n"
+           "      %s to drive the keyboard.\n\n",
+           graphicsname(),
+           keyname());
+    printf("usage: thrust [OPTION]...\n\n"
+           "  -v, --version\n"
+           "  -h, --help\n"
+           "  -d, --nodemo           Do not run the demo.\n"
+           "  -e, --nosoundeffects   Do not play sound effects.\n"
+           "  -c, --gamma=Value      Gamma correction of colors.\n"
+           "  -j, --step             Only draw every third frame (faster).\n"
+           "  -z, --zoom=1..6        Scale the window by an integer factor.\n");
+    printf("\n");
+    exit(1);
     case 'v':      /* --version */
       printf("Thrust: version " VERSION "\n");
       exit(0);
