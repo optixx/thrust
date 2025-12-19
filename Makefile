@@ -2,9 +2,10 @@
 
 SHELL        = /bin/sh
 INSTALL      = /usr/bin/install -c
-DD           = dd
 CC ?= gcc
 SDLCONFIG ?= sdl-config
+PYTHON ?= python3
+ASSET_TOOL := $(PYTHON) helpers/asset_tool.py
 SDL_CFLAGS := $(shell $(SDLCONFIG) --cflags 2>/dev/null)
 SDL_LIBS := $(shell $(SDLCONFIG) --libs 2>/dev/null)
 ifeq ($(strip $(SDL_LIBS)),)
@@ -28,12 +29,18 @@ HIGHSCORE    = thrust.highscore
 FULLHISCORE  = $(STATEDIR)/$(HIGHSCORE)
 VERSION_NR   = 0.89
 VERSION      = 0.89c
-HELPPRG      = $(addprefix helpers/, bin2c txt2c reverse)
-BIN8         = $(addprefix datasrc/, \
+BIN8         = $(addprefix assets/, \
                  blks0.bin blks1.bin blks2.bin blks3.bin \
                  blks4.bin blks5.bin blks6.bin blks7.bin \
                  blks8.bin blks9.bin blksa.bin blksb.bin \
                  blksc.bin blksd.bin blkse.bin blksf.bin )
+BMP_FILES    = $(wildcard assets/*-*.bmp)
+BMP_BASE     = $(word 1,$(subst -, ,$(basename $(notdir $1))))
+BMP_BLOCK    = $(word 2,$(subst -, ,$(basename $(notdir $1))))
+BMP_BINARIES = $(foreach bmp,$(BMP_FILES),assets/$(call BMP_BASE,$(bmp)).bin)
+PAL_FILES    = $(wildcard assets/*.pal)
+PAL_BINARIES = $(foreach pal,$(PAL_FILES),assets/$(basename $(notdir $(pal))).bin)
+ASSET_BINARIES = $(sort $(BMP_BINARIES) $(PAL_BINARIES) assets/blks.bin)
 
 DEFINES      = $(strip -DHIGHSCOREFILE=\"$(FULLHISCORE)\" -DVERSION=\"$(VERSION)\" -DHAVE_CONFIG_H)
 WARNFLAGS    = -Wall -Wstrict-prototypes -Wmissing-prototypes
@@ -45,29 +52,30 @@ HELP_CFLAGS  = -DHAVE_CONFIG_H $(CFLAGS)
 LDFLAGS      =
 LIBS         = -lm
 
-SOURCEOBJS   = $(addprefix src/, \
-                 thrust.o fast_gr.o hiscore.o conf.o things.o init.o \
-                 level.o font5x5.o graphics.o )
-DATASEC      = $(addprefix datasrc/, \
-                 blks.c ship.c shld.c colors.c bullet.c title.c demomove.c \
-                 level1.c level2.c level3.c level4.c level5.c level6.c )
-DATAOBJS     = $(addprefix datasrc/, font.o) $(patsubst %.c,%.o,$(DATASEC))
-SOUNDITOBJS  = $(addprefix src/, soundIt.o)
-SOUNDOBJS    = $(addprefix datasrc/, \
-                 boom.o boom2.o harp.o thrust.o zero.o )
+	SOURCEOBJS   = $(addprefix src/, \
+	                 thrust.o fast_gr.o hiscore.o conf.o things.o init.o \
+	                 level.o font5x5.o graphics.o )
+	DATASEC      = $(addprefix assets/, \
+	                 blks.c ship.c shld.c colors.c bullet.c title.c demomove.c \
+	                 level1.c level2.c level3.c level4.c level5.c level6.c )
+	DATAOBJS     = $(addprefix assets/, font.o) $(patsubst %.c,%.o,$(DATASEC))
+	SOUNDITOBJS  = $(addprefix src/, soundIt.o)
+	SOUNDOBJS    = $(addprefix assets/, \
+	                 boom.o boom2.o harp.o thrust.o zero.o )
 ifeq ($(SOUND),yes)
 OBJS         = $(SOURCEOBJS) $(DATAOBJS) $(SOUNDITOBJS) $(SOUNDOBJS)
 else
 OBJS         = $(SOURCEOBJS) $(DATAOBJS)
 endif
 SDL_OBJS     = $(addprefix src/, SDLkey.o SDL.o )
+ASSET_CS     = $(DATASEC)
 
- .PHONY: all clean TAGS dvi
+.PHONY: all clean TAGS dvi assets
 
 all: sdlthrust
 
 clean:
-	rm -rf $(strip *~ core sdlthrust $(OBJS) $(SDL_OBJS) $(HELPPRG) datasrc/blks*.bin .depend )
+	rm -rf $(strip *~ core sdlthrust $(OBJS) $(SDL_OBJS) assets/*.bin .depend )
 	rm -f build-stamp
 
 TAGS:
@@ -79,46 +87,34 @@ dvi:
 sdlthrust: $(OBJS) $(SDL_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^ $(SDL_LIBS) $(LIBS)
 
-datasrc/blks.bin: $(BIN8)
+assets: $(ASSET_BINARIES) $(ASSET_CS)
+
+assets/blks.bin: $(BIN8)
 	cat $^ > $@
-
-helpers/reverse: helpers/reverse.c
-	$(CC) $(HELP_CFLAGS) $< -o $@
-
-helpers/bin2c: helpers/bin2c.c
-	$(CC) $(HELP_CFLAGS) $< -o $@
-
-helpers/txt2c: helpers/txt2c.c
-	$(CC) $(HELP_CFLAGS) $< -o $@
 
 %.o: %.c
 	$(CC) $(ALL_CFLAGS) -c -o $(addprefix $(dir $<),$(notdir $@)) $<
 
-%.bin: %.pal
-	$(DD) of=$@ if=$< bs=1 skip=790
+define BMP_TO_BIN_RULE
+assets/$(call BMP_BASE,$(1)).bin: $(1)
+	$(ASSET_TOOL) bmp2bin --block-size $(call BMP_BLOCK,$(1)) --skip 1078 $(1) $$@
+endef
+$(foreach bmp,$(BMP_FILES),$(eval $(call BMP_TO_BIN_RULE,$(bmp))))
 
-%.rev: %.bmp
-	$(DD) of=$@ if=$< bs=1 skip=1078
+define PAL_TO_BIN_RULE
+assets/$(basename $(notdir $(1))).bin: $(1)
+	$(ASSET_TOOL) pal2bin --skip 790 $(1) $$@
+endef
+$(foreach pal,$(PAL_FILES),$(eval $(call PAL_TO_BIN_RULE,$(pal))))
 
-%.bin: %-4.rev helpers/reverse
-	helpers/reverse 4 < $< > $@
+%.c: %.def
+	$(ASSET_TOOL) def2c $(notdir $(basename $<)) $< > $@
 
-%.bin: %-8.rev helpers/reverse
-	helpers/reverse 8 < $< > $@
+%.c: %.bin
+	$(ASSET_TOOL) bin2c bin_$(notdir $(basename $<)) $< > $@
 
-%.bin: %-16.rev helpers/reverse
-	helpers/reverse 16 < $< > $@
-
-%.c: %.def helpers/txt2c
-	helpers/txt2c $(notdir $(basename $<)) < $< > $@
-
-%.c: %.bin helpers/bin2c
-	helpers/bin2c bin_$(notdir $(basename $<)) < $< > $@
-
-%.c: %.snd helpers/bin2c
-	/bin/echo > $@
-	/bin/echo unsigned int sound_$(notdir $(basename $<))_len = `wc -c < $<`\; >> $@
-	helpers/bin2c sound_$(notdir $(basename $<)) < $< >> $@
+%.c: %.snd
+	$(ASSET_TOOL) sound2c sound_$(notdir $(basename $<)) $< > $@
 
 ifeq (.depend,$(wildcard .depend))
 include .depend
