@@ -26,7 +26,7 @@ static SDL_Surface *scr = NULL;
 
 // used for output-specific options
 char *
-graphicsname()
+graphicsname(void)
 {
 	static char name[] = "SDL";
 	return name;
@@ -34,7 +34,7 @@ graphicsname()
 
 // run before init, empty
 void
-graphics_preinit()
+graphics_preinit(void)
 {
 	;
 }
@@ -73,7 +73,7 @@ graphicsinit(int argc, char **argv)
 
 // close graphics
 int
-graphicsclose()
+graphicsclose(void)
 {
 	SDL_Quit();
 	scr = NULL;
@@ -83,13 +83,14 @@ graphicsclose()
 
 // clear screen
 void
-clearscr()
+clearscr(void)
 {
 	if (SDL_MUSTLOCK(scr))
 		SDL_LockSurface(scr);
 
-	for (int x = 0; x < X; x++)
-		for (int y = 0; y < Y; y++)
+	int x, y;
+	for (x = 0; x < X; x++)
+		for (y = 0; y < Y; y++)
 			putpixel(x, y, 0);
 
 	if (SDL_MUSTLOCK(scr))
@@ -101,14 +102,14 @@ clearscr()
 
 // flip buffer
 void
-displayscreen()
+displayscreen(void)
 {
 	SDL_UpdateRect(scr, 0, 0, 0, 0);
 }
 
 // displayscreen and wait
 void
-syncscreen()
+syncscreen(void)
 {
 	struct timeval tmp;
 	static int old = -1;
@@ -167,8 +168,9 @@ putarea(byte *source, int x, int y, int width, int height, int bytesperline, int
 	if (SDL_MUSTLOCK(scr))
 		SDL_LockSurface(scr);
 
-	for (int j = 0; j < height; j++)
-		for (int i = 0; i < width; i++)
+	int j, i;
+	for (j = 0; j < height; j++)
+		for (i = 0; i < width; i++)
 			_putpixel(destx + i, desty + j, source[bytesperline * (y + j) + x + i]);
 
 	if (SDL_MUSTLOCK(scr))
@@ -183,7 +185,8 @@ fadepalette(int first, int last, byte *RGBtable, int fade, int flag)
 	int n = last - first + 1;
 	SDL_Color *col = calloc(n, sizeof(SDL_Color));
 
-	for (int foo = 0; foo < n; foo++) {
+	int foo;
+	for (foo = 0; foo < n; foo++) {
 		col[foo].r = RGBtable[3 * foo + 0];
 		col[foo].g = RGBtable[3 * foo + 1];
 		col[foo].b = RGBtable[3 * foo + 2];
@@ -198,7 +201,7 @@ fadepalette(int first, int last, byte *RGBtable, int fade, int flag)
 
 // fade in gradually
 void
-fade_in()
+fade_in(void)
 {
 	fadepalette(0, 255, bin_colors, -1, 1);
 //	for (int i = 1; i <= 64; i++)
@@ -209,7 +212,7 @@ fade_in()
 
 // fade out gradually
 void
-fade_out()
+fade_out(void)
 {
 	fadepalette(0, 255, bin_colors, -1, 1);
 //	for (int i = 64; i; i--)

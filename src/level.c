@@ -16,6 +16,14 @@
 #include "graphics.h"
 #include "thrust.h"
 
+static unsigned
+manhattan_distance(word ax, word ay, word bx, word by)
+{
+  unsigned dx = ax > bx ? ax - bx : bx - ax;
+  unsigned dy = ay > by ? ay - by : by - ay;
+  return dx + dy;
+}
+
 int
 matchsliders(void)
 {
@@ -324,13 +332,23 @@ readbana(char **ptr)
       stat=0;
     }
     for(x=0; x<nrbarriers; x++) {
+      unsigned best_dist, candidate;
+
       barriers[x].restart=&restartpoints[0];
-      for(y=1; y<nrrestartpoints; y++)
-	if((abs(barriers[x].x-restartpoints[y].x)
-	    + abs(barriers[x].y-restartpoints[y].y))
-	   < (abs(barriers[x].x-barriers[x].restart->x)
-	      + abs(barriers[x].y-barriers[x].restart->y)))
-	  barriers[x].restart=&restartpoints[y];
+      best_dist =
+        manhattan_distance(barriers[x].x, barriers[x].y,
+                           barriers[x].restart->x,
+                           barriers[x].restart->y);
+      for(y=1; y<nrrestartpoints; y++) {
+        candidate =
+          manhattan_distance(barriers[x].x, barriers[x].y,
+                             restartpoints[y].x,
+                             restartpoints[y].y);
+        if(candidate < best_dist) {
+          best_dist = candidate;
+          barriers[x].restart=&restartpoints[y];
+        }
+      }
     }
   }
 

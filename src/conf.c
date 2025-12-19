@@ -45,7 +45,7 @@ getscancode(int old, int x, int y)
 #define DESCRIPTIONS (5)
 
 void
-conf()
+conf(void)
 {
   static char *descriptions[DESCRIPTIONS] = {
     "Turn left",
@@ -137,7 +137,7 @@ void initkeys(void)
   FILE *f;
   int rows=0;
   int res;
-  byte row[256], field[256], value[256], driver[256];
+  char row[256], field[256], value[256], driver[256];
 
   home=getenv("HOME");
   if(home==NULL)

@@ -16,7 +16,7 @@ static int keyz[SDLK_LAST];
 
 // key driver name
 char *
-keyname()
+keyname(void)
 {
 	static char name[] = "SDL";
 	return name;
@@ -24,7 +24,7 @@ keyname()
 
 // init key system
 int
-keyinit()
+keyinit(void)
 {
 	flushkeyboard();
 	return 0;
@@ -32,7 +32,7 @@ keyinit()
 
 // close, empty
 int
-keyclose()
+keyclose(void)
 {
 	return 0;
 }
@@ -67,11 +67,9 @@ static int
 update_keys(int retdown)
 {
 	SDL_Event ev;
-	int n = 0;
 	while (SDL_PollEvent(&ev)) {
 		switch (ev.type) {
 			case SDL_KEYDOWN:
-				n++;
 				keyz[ev.key.keysym.sym] = 1;
 				if (retdown)
 					return ev.key.keysym.sym;
@@ -91,14 +89,14 @@ update_keys(int retdown)
 
 // read one keypress
 int
-getkey()
+getkey(void)
 {
 	return update_keys(1);
 }
 
 // return key status in a byte
 byte
-getkeys()
+getkeys(void)
 {
 	byte keybits = 0;
 
@@ -125,38 +123,40 @@ getkeys()
 
 // set singlekey mode, stub
 void
-singlekey()
+singlekey(void)
 {
 }
 
 // set multikey mode, stub
 void
-multiplekeys()
+multiplekeys(void)
 {
 }
 
 // get one key
 int
-getonemultiplekey()
+getonemultiplekey(void)
 {
 	return getkey();
 }
 
 // flush keyboard
 void
-flushkeyboard()
+flushkeyboard(void)
 {
 	update_keys(0);
-	for (int foo = 0; foo < SDLK_LAST; foo++)
+	int foo;
+	for (foo = 0; foo < SDLK_LAST; foo++)
 		keyz[foo] = 0;
 }
 
 // is a key waiting
 int
-keywaiting()
+keywaiting(void)
 {
 	update_keys(0);
-	for (int foo = 0; foo < SDLK_LAST; foo++)
+	int foo;
+	for (foo = 0; foo < SDLK_LAST; foo++)
 		if (keyz[foo])
 			return 1;
 	return 0;

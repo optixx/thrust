@@ -245,7 +245,7 @@ drawlineh(int x1, int y1, int x2, int y2, byte color, byte *storage)
     i=1;
   }
   else {
-    yi=-PBILDX<<1;
+    yi=-(PBILDX<<1);
     i=-1;
   }
   dx=x2-x1;
@@ -294,7 +294,7 @@ undrawlineh(int x1, int y1, int x2, int y2, byte *storage)
     i=1;
   }
   else {
-    yi=-PBILDX<<1;
+    yi=-(PBILDX<<1);
     i=-1;
   }
   dx=x2-x1;
