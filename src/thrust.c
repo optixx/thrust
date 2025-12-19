@@ -18,7 +18,7 @@
 #include "thrust.h"
 #include "hiscore.h"
 #include "graphics.h"
-#include "fast_gr.h"
+#include "graphics.h"
 #include "graphics.h"
 #include "font5x5.h"
 #include "things.h"

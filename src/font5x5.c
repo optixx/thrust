@@ -15,7 +15,7 @@
 #include "keyboard.h"
 #include "thrust.h"
 #include "font5x5.h"
-#include "fast_gr.h"
+#include "graphics.h"
 #include "graphics.h"
 
 byte chcolor=TEXTCOLOR;

@@ -59,7 +59,7 @@ LDFLAGS      =
 LIBS         = -lm
 
 SOURCEOBJS   = $(addprefix $(SRC_OBJ_DIR)/, \
-                 thrust.o fast_gr.o hiscore.o conf.o things.o init.o \
+                 thrust.o hiscore.o conf.o things.o init.o \
                  level.o font5x5.o graphics.o )
 DATASEC      = $(addprefix assets/, \
                  blks.c ship.c shld.c colors.c bullet.c title.c demomove.c \

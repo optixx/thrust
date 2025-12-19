@@ -18,7 +18,7 @@
 #include "thrust_t.h"
 #include "keyboard.h"
 #include "init.h"
-#include "fast_gr.h"
+#include "graphics.h"
 #include "graphics.h"
 #include "things.h"
 #include "font5x5.h"

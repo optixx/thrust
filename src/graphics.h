@@ -4,10 +4,19 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
-#include "fast_gr.h"
+#include "thrust_t.h"
+
+#define BBILDX  (41)
+#define BBILDY  (23)
+#define PBILDX  (BBILDX*8)
+#define PBILDY  (BBILDY*8)
+#define PUSEX   (PBILDX-8)
+#define PUSEY   (PBILDY-8)
 
 #define maxlenx ((word)BBILDX*12) /*max 48 skärmar a 41*23 tecken a */
 #define maxleny ((word)BBILDY*4) /* 8*8 pixels a 8 bitar, dvs. 3274752 bytes.*/
+
+extern byte *bild;
 
 void writeblock(word bx, word by, byte block);
 void drawteleline(int round, int x1, int y1, int x2, int y2, int j, int k);
@@ -29,6 +38,18 @@ word drawshuttle(void);
 void undrawshuttle(void);
 void drawfuellines(void);
 void undrawfuellines(void);
+void putscr(int x, int y, int force_draw);
+void putblock(int x, int y, byte *source);
+void drawfuel(int fuel);
+void drawship(word bx, word by, byte *ship, byte *storage);
+void undrawship(word bx, word by, byte *storage);
+void drawsquare(word bx, word by,
+		byte *object, byte *storage,
+		byte deltax, byte deltay);
+void undrawsquare(word bx, word by,
+		  byte *storage,
+		  byte deltax, byte deltay);
+word testcrash(byte *object, byte *storage, word len, byte shield);
 void clearscr(void);
 void putarea(byte *source,
 	     int x, int y, int width, int height, int bytesperline,

@@ -24,7 +24,7 @@
 
 #include "thrust_t.h"
 #include "things.h"
-#include "fast_gr.h"
+#include "graphics.h"
 #include "graphics.h"
 #include "thrust.h"
 
