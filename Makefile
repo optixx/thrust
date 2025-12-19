@@ -15,9 +15,7 @@ SDL_CFLAGS = -I/opt/homebrew/include/SDL2 -I/opt/homebrew/include -I/Library/Fra
 endif
 
 HIGHSCORE    = thrust.highscore
-FULLHISCORE  = $(HIGHSCORE)
-VERSION_NR   = 0.89
-VERSION      = 0.89c
+VERSION      = 0.90
 BIN8         = $(addprefix assets/, \
                  blks0.bin blks1.bin blks2.bin blks3.bin \
                  blks4.bin blks5.bin blks6.bin blks7.bin \
@@ -34,7 +32,7 @@ OBJDIR       = build
 SRC_OBJ_DIR  = $(OBJDIR)/src
 ASSET_OBJ_DIR = $(OBJDIR)/assets
 
-DEFINES      = $(strip -DHIGHSCOREFILE=\"$(FULLHISCORE)\" -DVERSION=\"$(VERSION)\")
+DEFINES      = $(strip -DHIGHSCOREFILE=\"$(HISCORE)\" -DVERSION=\"$(VERSION)\")
 WARNFLAGS    = -Wall -Wstrict-prototypes -Wmissing-prototypes
 STDFLAGS     = -std=gnu89
 OPTIMIZE     = -fomit-frame-pointer -O3
