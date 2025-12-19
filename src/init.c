@@ -166,7 +166,7 @@ inithardware(int argc, char **argv)
   }
 #endif
 
-  if(graphicsinit(argc, argv))
+  if(graphicsinit(window_zoom))
     exit(-1);
 
   if(keyinit()) {

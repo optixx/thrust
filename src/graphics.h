@@ -63,7 +63,7 @@ void fadepalette(int first, int last,
 	 byte *RGBtable,
 	 int fade, int flag);
 void graphics_preinit(void);
-int graphicsinit(int argc, char **argv);
+int graphicsinit(int zoom);
 int graphicsclose(void);
 char *graphicsname(void);
 

@@ -4,13 +4,11 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <getopt.h>
 
 #include <SDL.h>
 
 #include "thrust.h"
 #include "graphics.h"
-#include "options.h"
 
 static const int X = 320;
 static const int Y = 200;
@@ -62,28 +60,13 @@ graphics_preinit(void)
 }
 
 int
-graphicsinit(int argc, char **argv)
+graphicsinit(int zoom)
 {
-  int optc;
-
-  optind = 0; /* reset getopt parser */
-  do {
-    static struct option longopts[] = {
-      OPTS,
-      { "zoom",           required_argument, 0, 'z' },
-      { 0, 0, 0, 0 }
-    };
-
-    optc = getopt_long_only(argc, argv, OPTC SDL_OPTC, longopts, (int *) 0);
-    if(optc == 'z') {
-      int z = atoi(optarg);
-      if(z < 1)
-        z = 1;
-      if(z > 6)
-        z = 6;
-      window_zoom = z;
-    }
-  } while(optc != EOF);
+  if(zoom < 1)
+    zoom = 1;
+  if(zoom > 6)
+    zoom = 6;
+  window_zoom = zoom;
 
   if(SDL_Init(SDL_INIT_VIDEO) != 0) {
     fprintf(stderr, "SDL_Init: %s\n", SDL_GetError());
