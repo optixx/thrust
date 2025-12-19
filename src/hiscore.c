@@ -9,11 +9,57 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdint.h>
 
 #include "thrust_t.h"
 #include "hiscore.h"
 
 highscoreentry highscorelist[HIGHSCORES];
+
+static const char default_name[] = "John Doe";
+
+static int
+write_le32(FILE *fp, int score)
+{
+  int i;
+
+  for(i = 0; i < 4; i++) {
+    if(fputc((score >> (8 * i)) & 0xff, fp) == EOF)
+      return 0;
+  }
+  return 1;
+}
+
+static int
+read_le32(FILE *fp, int *out)
+{
+  int i;
+  int value = 0;
+  int byte;
+
+  for(i = 0; i < 4; i++) {
+    byte = fgetc(fp);
+    if(byte == EOF)
+      return 0;
+    value |= byte << (8 * i);
+  }
+
+  *out = value;
+  return 1;
+}
+
+static void
+sanitize_name(char *dest, const char *src)
+{
+  if(src == NULL) {
+    dest[0] = '\0';
+    return;
+  }
+
+  size_t len = strnlen(src, sizeof highscorelist[0].name - 1);
+  memcpy(dest, src, len);
+  dest[len] = '\0';
+}
 
 void
 writehighscores(void)
@@ -25,11 +71,9 @@ writehighscores(void)
   if(fp==NULL)
     return;
   for(i=0; i<HIGHSCORES; i++) {
-    fwrite(highscorelist[i].name, 40, 1, fp);
-    fputc(highscorelist[i].score    , fp);
-    fputc(highscorelist[i].score>>8 , fp);
-    fputc(highscorelist[i].score>>16, fp);
-    fputc(highscorelist[i].score>>24, fp);
+    if(fwrite(highscorelist[i].name, sizeof highscorelist[i].name, 1, fp) != 1
+       || !write_le32(fp, highscorelist[i].score))
+      break;
   }
   fclose(fp);
 }
@@ -39,22 +83,16 @@ readhighscores(void)
 {
   FILE *fp;
   int res;
-  int i, j;
-
+  int i;
   fp=fopen(HIGHSCOREFILE, "rb");
   if(fp==NULL)
     return(0);
 
   for(i=0; i<HIGHSCORES; i++) {
-    res = fread(highscorelist[i].name, 40, 1, fp);
-    if(res != 1)
+    res = fread(highscorelist[i].name, sizeof highscorelist[i].name, 1, fp);
+    if(res != 1 || !read_le32(fp, &highscorelist[i].score)) {
+      fclose(fp);
       return(0);
-    highscorelist[i].score = 0;
-    for(j=0; j<4; j++) {
-      res = fgetc(fp);
-      if(res == EOF)
-	return(0);
-      highscorelist[i].score += res<<(8*j);
     }
   }
 
@@ -74,9 +112,8 @@ standardname(void)
   if(tmp==NULL)
     name[0]=0;
   else {
-    strncpy(name, tmp, 39);
-    name[39]=0;
-    name[0]=toupper(name[0]);
+    sanitize_name(name, tmp);
+    name[0]=toupper((unsigned char)name[0]);
   }
 
   return(name);
@@ -89,7 +126,7 @@ inithighscorelist(void)
   
   if(!readhighscores()) {
     for(i=0; i<HIGHSCORES; i++) {
-      strcpy(highscorelist[i].name, "John Doe");
+      sanitize_name(highscorelist[i].name, default_name);
       highscorelist[i].score=(5-i)*1000;
     }
   }
@@ -110,12 +147,11 @@ inserthighscore(char *name, int score)
 
   for(i=HIGHSCORES; i>0 && score>highscorelist[i-1].score; i--) {
     if(i<HIGHSCORES) {
-      strcpy(highscorelist[i].name, highscorelist[i-1].name);
-      highscorelist[i].score = highscorelist[i-1].score;
+      highscorelist[i] = highscorelist[i-1];
     }
   }
   if(i<HIGHSCORES) {
-    strcpy(highscorelist[i].name, name);
+    sanitize_name(highscorelist[i].name, name);
     highscorelist[i].score = score;
   }
 }
