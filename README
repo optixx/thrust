@@ -8,9 +8,15 @@ converted to X and Linux/SVGAlib. Nowadays it is also converted to Windows
 This copy of the source tree now only maintains the SDL1.2 port that compiles
 on modern macOS. The legacy SVGA, X11, and DirectX backends have been removed.
 
-This is the game from the C64 that you cannot live without.
+Build instructions:
 
-See the file INSTALL for building and installation instructions.
+  * `make sdlthrust` – compiles the SDL1 executable (uses `sdl-config` for flags;
+    override with `SDLCONFIG=/path/to/sdl-config` if needed).
+  * `make clean` – wipes built objects and generated helper programs.
+
+Configuration defaults and keyboard mappings live in the sample `thrustrc`.
+
+This is the game from the C64 that you cannot live without.
 
 There is a web page that is supposed to be up to date. You can find it at
 http://www.lysator.liu.se/~peda/thrust/, and it should contain information

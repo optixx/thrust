@@ -16,7 +16,6 @@ SDL_BASE_INCLUDE := $(patsubst %/SDL,%,$(SDL_INC_DIR))
 ifneq ($(SDL_BASE_INCLUDE),$(SDL_INC_DIR))
 SDL_CFLAGS := $(SDL_CFLAGS) -I$(SDL_BASE_INCLUDE)
 endif
-POD2MAN ?= /usr/bin/pod2man --section=6
 
 prefix ?= /usr/local
 exec_prefix ?= $(prefix)
@@ -25,7 +24,6 @@ MANDIR ?= $(prefix)/man
 STATEDIR ?= $(prefix)/com
 DEB ?=
 
-MAN          = thrust.man
 HIGHSCORE    = thrust.highscore
 FULLHISCORE  = $(STATEDIR)/$(HIGHSCORE)
 VERSION_NR   = 0.89
@@ -67,105 +65,22 @@ OBJS         = $(SOURCEOBJS) $(DATAOBJS)
 endif
 SDL_OBJS     = $(addprefix src/, SDLkey.o SDL.o )
 
-TARFILE      = thrust-$(VERSION).src.tar
-BINTARFILE   = thrust-$(VERSION).bin.tar
-DISTFILES    = COPYING README INSTALL TODO CHANGES thrustrc thrust.lsm \
-               thrust-$(VERSION).lsm $(MAN) $(HIGHSCORE) Makefile
-SRCDISTFILES = $(addsuffix .pod.in, $(basename $(MAN))) thrust.pod install-sh
-
-.PHONY: all install uninstall install-man uninstall-man \
-        clean distclean mostlyclean realclean dep TAGS info dvi man dist bindist
+ .PHONY: all clean TAGS dvi
 
 all: sdlthrust
-
-install:
-	@if test ! -d $(DEB)/$(BINDIR) ; then \
-	  echo $(INSTALL) -d $(DEB)/$(BINDIR); \
-	  $(INSTALL) -d $(DEB)/$(BINDIR); \
-	fi
-	$(INSTALL) sdlthrust $(DEB)/$(BINDIR)/sdlthrust
-	@if test ! -d $(DEB)/$(STATEDIR) ; then \
-	  $(INSTALL) -d $(DEB)/$(STATEDIR); \
-	fi
-
-uninstall:
-	-rm -i $(BINDIR)/sdlthrust
-	-rm -i $(FULLHISCORE)
-
-install-man: man
-	@mkdir -p $(DEB)/$(MANDIR)/man6
-	$(INSTALL) -m 0644 $(MAN) $(DEB)/$(MANDIR)/man6/$(addsuffix .6,$(basename $(MAN)))
-
-uninstall-man:
-	-rm $(MANDIR)/man6/$(addsuffix .6,$(basename $(MAN)))
 
 clean:
 	rm -rf $(strip *~ core sdlthrust $(OBJS) $(SDL_OBJS) $(HELPPRG) datasrc/blks*.bin .depend )
 	rm -f build-stamp
 
-distclean: clean
-	rm -f src/TAGS $(TARFILE).gz $(BINTARFILE).gz thrust-$(VERSION).lsm $(addsuffix .pod,$(basename $(MAN)))
-
-mostlyclean:
-	rm -rf *~ core sdlthrust $(OBJS) $(SDL_OBJS)
-
-realclean: distclean
-	rm -f $(patsubst %.o,%.c,$(SOUNDOBJS)) $(DATASEC) $(MAN)
-
-dep:
-	$(CC) -M $(patsubst %.o,%.c,$(SOURCEOBJS)) > .depend
-	$(CC) -M $(patsubst %.o,%.c,$(SDL_OBJS)) >> .depend
-	ifneq ($(SOUND),yes)
-		: # no extra dependencies
-	else
-		$(CC) -M $(patsubst %.o,%.c,$(SOUNDOBJS)) >> .depend
-	endif
-
 TAGS:
 	etags src/*.c -o src/TAGS
-
-info:
-	@echo No documentation available.
 
 dvi:
 	@echo No documentation available.
 
-man: $(MAN)
-
 sdlthrust: $(OBJS) $(SDL_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^ $(SDL_LIBS) $(LIBS)
-
-dist: man $(patsubst %.o,%.c,$(DATAOBJS) $(SOUNDOBJS))
-	mkdir -p thrust-$(VERSION)
-	mkdir -p thrust-$(VERSION)/src
-	mkdir -p thrust-$(VERSION)/datasrc
-	mkdir -p thrust-$(VERSION)/helpers
-	cp -dpf $(DISTFILES) thrust-$(VERSION)
-	cp -dpf $(SRCDISTFILES) thrust-$(VERSION)
-	cp -dpf src/*.h src/*.c src/*.in thrust-$(VERSION)/src
-	cp -dpf datasrc/*.c datasrc/*.bmp datasrc/*.snd \
-	        datasrc/*.pal datasrc/*.def datasrc/*.ppm \
-	        datasrc/demomove.bin thrust-$(VERSION)/datasrc
-	cp -dpf helpers/*.c thrust-$(VERSION)/helpers
-	rm -f thrust-$(VERSION)/src/config.h
-	chmod -R g-w thrust-$(VERSION)/*
-	tar -cf $(TARFILE) thrust-$(VERSION)/*
-	gzip -f9 $(TARFILE)
-	rm -rf thrust-$(VERSION)
-
-bindist: sdlthrust man
-	mkdir -p thrust-$(VERSION)
-	cp -dpf $(DISTFILES) sdlthrust thrust-$(VERSION)
-	cp -dpf src/*.h src/*.c src/*.in thrust-$(VERSION)/src
-	cp -dpf datasrc/*.c datasrc/*.bmp datasrc/*.snd \
-	        datasrc/*.pal datasrc/*.def datasrc/*.ppm \
-	        datasrc/demomove.bin thrust-$(VERSION)/datasrc
-	cp -dpf helpers/*.c thrust-$(VERSION)/helpers
-	rm -f thrust-$(VERSION)/src/config.h
-	chmod -R g-w thrust-$(VERSION)/*
-	tar -cf $(BINTARFILE) thrust-$(VERSION)/*
-	gzip -f9 $(BINTARFILE)
-	rm -rf thrust-$(VERSION)
 
 datasrc/blks.bin: $(BIN8)
 	cat $^ > $@
@@ -218,23 +133,6 @@ ifeq ($(NO_PBM),yes)
 else
 %.c: %.ppm helpers/ppm2c
 	helpers/ppm2c -n $(notdir $(basename $<)) -m 32 < $< > $@
-endif
-
-%.man: %.pod
-ifeq ($(POD2MAN),)
-	@echo Must have pod2man to rebuild man page.
-	@echo Warning: Unable to rebuild $@ from $<.
-else
-	$(POD2MAN) $< > $@
-endif
-
-%.html: %.pod
-ifeq ($(POD2MAN),)
-	@echo Must have pod2html to rebuild man page.
-	@echo Warning: Unable to rebuild $@ from $<.
-else
-	$(subst pod2man,pod2html,$(POD2MAN)) $< > $@
-	rm pod2htmd.x~~ pod2htmi.x~~
 endif
 
 ifeq (.depend,$(wildcard .depend))

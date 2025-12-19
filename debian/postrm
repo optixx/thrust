@@ -1,8 +1,0 @@
-#!/bin/sh -e
-
-if [ "$1" = "purge" ]; then
-	rm -f /var/games/thrust.highscore
-	rmdir /var/games 2>/dev/null || true
-fi
-
-#DEBHELPER#
