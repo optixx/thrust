@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include <getopt.h>
 
 #include <SDL.h>
@@ -18,8 +19,8 @@ static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
 static SDL_Texture *texture = NULL;
 static Uint8 *framebuffer = NULL;   /* indexed pixels */
-static Uint32 *rgba_buffer = NULL;  /* converted for texture upload */
 static SDL_Color palette[256];
+static Uint32 palette32[256];
 
 static void
 update_palette_from_table(int first, int last, byte *RGBtable)
@@ -32,6 +33,11 @@ update_palette_from_table(int first, int last, byte *RGBtable)
     palette[first + i].g = RGBtable[3 * i + 1];
     palette[first + i].b = RGBtable[3 * i + 2];
     palette[first + i].a = 0xff;
+    palette32[first + i] =
+      ((Uint32)palette[first + i].a << 24) |
+      ((Uint32)palette[first + i].r << 16) |
+      ((Uint32)palette[first + i].g << 8)  |
+      (Uint32)palette[first + i].b;
   }
 }
 
@@ -40,8 +46,6 @@ ensure_buffers(void)
 {
   if(framebuffer == NULL)
     framebuffer = (Uint8 *)calloc(X * Y, 1);
-  if(rgba_buffer == NULL)
-    rgba_buffer = (Uint32 *)calloc(X * Y, sizeof(Uint32));
 }
 
 char *
@@ -95,11 +99,13 @@ graphicsinit(int argc, char **argv)
     return -1;
   }
 
+  SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
   renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE | SDL_RENDERER_PRESENTVSYNC);
   if(!renderer) {
     fprintf(stderr, "SDL_CreateRenderer: %s\n", SDL_GetError());
     return -1;
   }
+  SDL_RenderSetIntegerScale(renderer, SDL_TRUE);
   SDL_RenderSetLogicalSize(renderer, X, Y);
 
   texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
@@ -129,9 +135,7 @@ graphicsclose(void)
   window = NULL;
 
   free(framebuffer);
-  free(rgba_buffer);
   framebuffer = NULL;
-  rgba_buffer = NULL;
 
   SDL_Quit();
   return 0;
@@ -148,16 +152,23 @@ clearscr(void)
 static void
 blit_indexed_to_texture(void)
 {
-  int i;
-  size_t total = (size_t)X * Y;
+  void *pixels = NULL;
+  int pitch = 0;
+  int y;
 
-  for(i = 0; i < (int)total; i++) {
-    SDL_Color c = palette[framebuffer[i]];
-    rgba_buffer[i] = ((Uint32)c.a << 24) | ((Uint32)c.r << 16) |
-                     ((Uint32)c.g << 8) | (Uint32)c.b;
+  if(SDL_LockTexture(texture, NULL, &pixels, &pitch) != 0)
+    return;
+
+  Uint8 *src = framebuffer;
+  Uint8 *dst = (Uint8 *)pixels;
+  for(y = 0; y < Y; y++) {
+    Uint32 *row = (Uint32 *)(dst + y * pitch);
+    int x;
+    for(x = 0; x < X; x++)
+      row[x] = palette32[*src++];
   }
 
-  SDL_UpdateTexture(texture, NULL, rgba_buffer, X * (int)sizeof(Uint32));
+  SDL_UnlockTexture(texture);
 }
 
 void
