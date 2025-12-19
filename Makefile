@@ -14,10 +14,8 @@ ifeq ($(strip $(SDL_CFLAGS)),)
 SDL_CFLAGS = -I/opt/homebrew/include/SDL2 -I/opt/homebrew/include -I/Library/Frameworks/SDL2.framework/Headers
 endif
 
-STATEDIR ?= /usr/local/com
-
 HIGHSCORE    = thrust.highscore
-FULLHISCORE  = $(STATEDIR)/$(HIGHSCORE)
+FULLHISCORE  = $(HIGHSCORE)
 VERSION_NR   = 0.89
 VERSION      = 0.89c
 BIN8         = $(addprefix assets/, \

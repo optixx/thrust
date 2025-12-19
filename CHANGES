@@ -5,6 +5,8 @@ Version 0.90 December 19, 2025
 * Modernized configuration loading: `conf.c` now reads `thrust.rc` from the executable directory, logs loading/parsing progress, and only understands SDL-based entries, while `SDLkey.c` feeds SDL names/codes back to the configuration screen.
 * Reworked the SDL input stack so `wait_for_key()` returns SDL2 keycodes, `SDLkey` helpers translate to/from SDL names, and the main loop uses plain SDL event handling with constant frame pacing; the sample `thrust.rc` now ships beside the game.
 
+* Added a `-s/--smooth` runtime switch so the SDL renderer can use linear filtering for zoomed displays, while leaving the default nearest-neighbor scaling unchanged.
+
 
 Version 0.89c-sdl1-current
 

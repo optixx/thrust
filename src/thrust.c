@@ -1095,13 +1095,16 @@ main(int argc, char **argv)
 {
   int end=0;
   int optc;
+  int enable_smooth = 0;
 
   window_zoom = 1;
 
+  fprintf(stderr, "main start\n");
+
   do {
     static struct option longopts[] = {
-      OPTS,
-      { 0, 0, 0, 0 }
+      OPTS
+      , { 0, 0, 0, 0 }
     };
 
     optc=getopt_long_only(argc, argv, OPTC, longopts, (int *) 0);
@@ -1119,6 +1122,9 @@ main(int argc, char **argv)
         window_zoom = z;
       }
       break;
+    case 's':
+      enable_smooth = 1;
+      break;
   case 'h':      /* --help */
     printf("Thrust: version " VERSION " -- the Game\n");
     printf("Using %s to drive the graphics and\n"
@@ -1129,6 +1135,7 @@ main(int argc, char **argv)
            "  -v, --version\n"
            "  -h, --help\n"
            "  -d, --nodemo           Do not run the demo.\n"
+           "  -s, --smooth           Use linear filtering when scaling.\n"
            "  -z, --zoom=1..6        Scale the window by an integer factor.\n");
     printf("\n");
     exit(1);
@@ -1143,6 +1150,9 @@ main(int argc, char **argv)
       exit(1);
     }
   } while(optc != EOF);
+
+  fprintf(stderr, "main: zoom=%d smooth=%d nodemo=%d\n", window_zoom, enable_smooth, nodemo);
+  graphics_set_smooth(enable_smooth);
 
   graphics_preinit();
   inithardware(argc, argv);

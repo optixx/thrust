@@ -13,6 +13,7 @@
 static const int X = 320;
 static const int Y = 200;
 int window_zoom = 1;
+static int linear_filter = 0;
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
 static SDL_Texture *texture = NULL;
@@ -54,6 +55,12 @@ graphicsname(void)
 }
 
 void
+graphics_set_smooth(int enable)
+{
+  linear_filter = enable ? 1 : 0;
+}
+
+void
 graphics_preinit(void)
 {
   /* Nothing needed for SDL2 */
@@ -68,6 +75,8 @@ graphicsinit(int zoom)
     zoom = 6;
   window_zoom = zoom;
 
+  fprintf(stderr, "graphicsinit: zoom=%d smooth=%d\n", window_zoom, linear_filter);
+
   if(SDL_Init(SDL_INIT_VIDEO) != 0) {
     fprintf(stderr, "SDL_Init: %s\n", SDL_GetError());
     return -1;
@@ -77,13 +86,16 @@ graphicsinit(int zoom)
                             SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                             X * window_zoom, Y * window_zoom,
                             SDL_WINDOW_SHOWN);
+  fprintf(stderr, "SDL_CreateWindow returned %p\n", window);
   if(!window) {
     fprintf(stderr, "SDL_CreateWindow: %s\n", SDL_GetError());
     return -1;
   }
 
-  SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
+  SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,
+              linear_filter ? "linear" : "nearest");
   renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE | SDL_RENDERER_PRESENTVSYNC);
+  fprintf(stderr, "SDL_CreateRenderer returned %p\n", renderer);
   if(!renderer) {
     fprintf(stderr, "SDL_CreateRenderer: %s\n", SDL_GetError());
     return -1;
@@ -93,6 +105,7 @@ graphicsinit(int zoom)
 
   texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
                               SDL_TEXTUREACCESS_STREAMING, X, Y);
+  fprintf(stderr, "SDL_CreateTexture returned %p\n", texture);
   if(!texture) {
     fprintf(stderr, "SDL_CreateTexture: %s\n", SDL_GetError());
     return -1;

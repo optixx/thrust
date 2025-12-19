@@ -66,5 +66,6 @@ void graphics_preinit(void);
 int graphicsinit(int zoom);
 int graphicsclose(void);
 char *graphicsname(void);
+void graphics_set_smooth(int enable);
 
 #endif /* GRAPHICS_H */

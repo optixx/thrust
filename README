@@ -11,6 +11,8 @@ Build instructions:
 
 Configuration defaults and key mappings live in the sample `thrust.rc` shipped with the project. The game looks for `thrust.rc` in the current working directory so you can clone the repo and run `./sdlthrust` alongside that file without touching your home directory.
 
+You can also pass `-s`/`--smooth` to `sdlthrust` to request linear interpolation while zooming the viewport (it still only supports integer zoom factors 1–6). Without the flag the renderer uses nearest-neighbor scaling.
+
 SDL sound is always enabled — there is no `HAVE_SOUND` guard anymore — so the SDL mixer is the only supported sound backend.
 
 Additional resources:
