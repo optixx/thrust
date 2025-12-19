@@ -1,7 +1,7 @@
 
 /* Written by Peter Ekberg, peda@lysator.liu.se */
 
-#include <unistd.h>
+#include <SDL.h>
 
 #include <math.h>
 #include <stdio.h>
@@ -287,11 +287,11 @@ void drawteleport(int tohere)
     {
         for (k = MIN(SZ_TP - 1, i), j = MAX(i - (SZ_TP - 1), 0); j <= MIN(i, NR_TP - 1); k--, j++)
             drawteleline(1, x1, y1, x2, y2, j, k);
-        usleep(50000L);
+        SDL_Delay(50);
         displayscreen();
     }
 
-    usleep(250000UL);
+    SDL_Delay(250);
     syncscreen();
     if (tohere)
         drawshuttle();
@@ -306,7 +306,7 @@ void drawteleport(int tohere)
         for (k = MIN(SZ_TP - 1, i), j = MAX(i - (SZ_TP - 1), 0); j <= MIN(i, NR_TP - 1); k--, j++)
             drawteleline(2, x1, y1, x2, y2, j, k);
 
-    usleep(250000UL);
+    SDL_Delay(250);
 
     syncscreen();
     drawteleline(0, 0, 0, 0, 0, 0, 0);
@@ -314,7 +314,7 @@ void drawteleport(int tohere)
     {
         for (k = MIN(SZ_TP - 1, i), j = MAX(i - (SZ_TP - 1), 0); j <= MIN(i, NR_TP - 1); k--, j++)
             drawteleline(3, x1, y1, x2, y2, j, k);
-        usleep(50000L);
+        SDL_Delay(50);
         displayscreen();
     }
     if (tohere)
@@ -757,7 +757,7 @@ uint32_t drawshuttle(void)
             printf("\n");
             printf("Killer line: x1=%d, y1=%d, x2=%d, y2=%d\n", x1, y1 % PBILDY, x2, y2 % PBILDY);
             undrawline(x1 + 2, y1 % PBILDY, x2 + 2, y2 % PBILDY, wirestorage);
-            usleep(10000000UL);
+            SDL_Delay(10000);
         }
 #endif
         crash = MAX(crash, tmp);

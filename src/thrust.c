@@ -1,6 +1,7 @@
 
 /* Written by Peter Ekberg, peda@lysator.liu.se */
 
+#include <SDL.h>
 #include <ctype.h>
 #include <getopt.h>
 #include <math.h>
@@ -8,7 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
 
 #include "conf.h"
 #include "font5x5.h"
@@ -344,7 +344,7 @@ int game(int demo)
         displayscreen();
         syncscreen();
         fade_in();
-        usleep(1000000UL + 2000000UL * gravitymsg);
+        SDL_Delay(1000 + 2000 * gravitymsg);
         gravitymsg = 0;
         syncscreen();
         putscr(pixx % PBILDX, pixy % PBILDY, 1);
@@ -778,7 +778,7 @@ int game(int demo)
         }
 
         if (!(actionbits & (quit_bit | escape_bit)))
-            usleep(1000000UL);
+            SDL_Delay(1000);
         fade_out();
 
         if (!demo && !(actionbits & (quit_bit | escape_bit)))
@@ -814,7 +814,7 @@ int game(int demo)
 
                 displayscreen();
                 fade_in();
-                usleep(2000000UL);
+                SDL_Delay(2000);
                 if (!easyrider && teleport && loaded)
                     localscore += 4000 + 400 * level - 2000 * powerplant;
                 if ((teleport && loaded) || !powerplant)
@@ -831,7 +831,7 @@ int game(int demo)
                 gamestatus(lives, fuel, score);
                 chflag = 0;
                 displayscreen();
-                usleep(2000000UL);
+                SDL_Delay(2000);
                 fade_out();
             }
         }
@@ -851,7 +851,7 @@ int game(int demo)
 
         displayscreen();
         fade_in();
-        usleep(2000000UL);
+        SDL_Delay(2000);
         fade_out();
     }
 
@@ -1108,7 +1108,7 @@ options menu(void)
             count = 0;
             break;
         }
-        usleep(50000UL);
+        SDL_Delay(50);
 
         if (++count == 160 && end == NOTHING)
         {
@@ -1196,7 +1196,7 @@ int main(int argc, char** argv)
     inithighscorelist();
     initkeys();
 
-    sleep(1);
+    SDL_Delay(1000);
 
     while (!end)
     {

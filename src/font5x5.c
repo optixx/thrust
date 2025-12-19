@@ -1,7 +1,7 @@
 
 /* Written by Peter Ekberg, peda@lysator.liu.se */
 
-#include <unistd.h>
+#include <SDL.h>
 
 #include <ctype.h>
 #include <stdio.h>
@@ -94,9 +94,9 @@ int readgs(int x, int y, char string[], int maxc, int maxp, char flag)
             cursor = 1 - cursor;
             for (j = 0; j < 12 && !key; j++)
             {
-                key = getkey();
-                if (!key)
-                    usleep(50000L);
+                    key = getkey();
+                    if (!key)
+                        SDL_Delay(50);
             }
             /*      vga_lockvc();*/
             for (j = 0; j < 5; j++)
