@@ -197,8 +197,8 @@ syncscreen(void)
   displayscreen();
 }
 
-static void
-_putpixel(int x, int y, byte color)
+void
+putpixel(int x, int y, byte color)
 {
   if(x < 0 || x >= X || y < 0 || y >= Y)
     return;
@@ -206,26 +206,39 @@ _putpixel(int x, int y, byte color)
 }
 
 void
-putpixel(int x, int y, byte color)
-{
-  _putpixel(x, y, color);
-}
-
-void
 putarea(byte *source, int x, int y, int width, int height, int bytesperline, int destx, int desty)
 {
-  int j, i;
+  int j;
+  int sx = x;
+  int sy = y;
+  int dx = destx;
+  int dy = desty;
+  int w = width;
+  int h = height;
 
-  for(j = 0; j < height; j++) {
-    int dy = desty + j;
-    if(dy < 0 || dy >= Y)
-      continue;
-    for(i = 0; i < width; i++) {
-      int dx = destx + i;
-      if(dx < 0 || dx >= X)
-        continue;
-      _putpixel(dx, dy, source[bytesperline * (y + j) + x + i]);
-    }
+  /* Clip against destination */
+  if(dx < 0) {
+    sx -= dx;
+    w += dx;
+    dx = 0;
+  }
+  if(dy < 0) {
+    sy -= dy;
+    h += dy;
+    dy = 0;
+  }
+  if(dx + w > X)
+    w = X - dx;
+  if(dy + h > Y)
+    h = Y - dy;
+
+  if(w <= 0 || h <= 0)
+    return;
+
+  for(j = 0; j < h; j++) {
+    byte *dstrow = framebuffer + (dy + j) * X + dx;
+    byte *srcrow = source + (sy + j) * bytesperline + sx;
+    memcpy(dstrow, srcrow, (size_t)w);
   }
 }
 
