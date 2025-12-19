@@ -508,9 +508,9 @@ game(int demo)
 #endif
         pause_message();
         end=NOTHING;
-        while(getkey());
+        flushkeyboard();
         while(end==NOTHING) {
-          ch=getkey();
+          ch=wait_for_key();
           switch(islower(ch) ? ch : tolower(ch)) {
           case 'p':
             if(easyrider!=9)
@@ -533,7 +533,6 @@ game(int demo)
             end=PLAY;
             break;
           }
-          usleep(50000UL);
         }
         if(easyrider!=9)
           easyrider=0;
@@ -547,8 +546,9 @@ game(int demo)
 #endif
         escape_message();
         end=NOTHING;
+        flushkeyboard();
         while(end==NOTHING) {
-          ch=getkey();
+          ch=wait_for_key();
           switch(islower(ch) ? ch : tolower(ch)) {
           case 'y':
             end=END;
@@ -562,7 +562,6 @@ game(int demo)
             end=PLAY;
             break;
           }
-          usleep(50000UL);
         }
       }
 
@@ -850,9 +849,7 @@ game(int demo)
 void
 pressanykey(void)
 {
-  do
-    usleep(50000UL);
-  while(!getkey());
+  wait_for_key();
 }
 
 int

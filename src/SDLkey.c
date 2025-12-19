@@ -9,7 +9,13 @@
 
 // left, right, thrust, fire, pick (, quit, pause, continue)
 int scancode[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-static int keyz[SDL_NUM_SCANCODES];
+static struct {
+  byte keybits;
+  SDL_Keycode last_key;
+  int quit_requested;
+} input_state;
+
+static void pump_events(void);
 
 // key driver name
 char *
@@ -51,25 +57,25 @@ keycode(char *keyname)
 int
 getkey(void)
 {
-  SDL_Event ev;
+  int key = 0;
 
-  while(SDL_WaitEvent(&ev)) {
-    if(ev.type == SDL_KEYDOWN) {
-      return (int)ev.key.keysym.sym;
-    } else if(ev.type == SDL_QUIT) {
-      return SDLK_ESCAPE;
-    }
+  pump_events();
+  if(input_state.last_key) {
+    key = (int)input_state.last_key;
+    input_state.last_key = 0;
+  } else if(input_state.quit_requested) {
+    key = SDLK_ESCAPE;
   }
-  return 0;
+
+  return key;
 }
 
-byte
-getkeys(void)
+static void
+update_keybits(void)
 {
   const Uint8 *state;
   byte keybits = 0;
 
-  SDL_PumpEvents();
   state = SDL_GetKeyboardState(NULL);
 
   if(state[SDL_SCANCODE_P])
@@ -88,13 +94,39 @@ getkeys(void)
   if(state[SDL_SCANCODE_SPACE])
     keybits |= pickup_bit;
 
-  return keybits;
+  if(input_state.quit_requested)
+    keybits |= escape_bit;
+
+  input_state.keybits = keybits;
+}
+
+static void
+pump_events(void)
+{
+  SDL_Event ev;
+
+  SDL_PumpEvents();
+  while(SDL_PollEvent(&ev)) {
+    if(ev.type == SDL_KEYDOWN) {
+      input_state.last_key = ev.key.keysym.sym;
+    } else if(ev.type == SDL_QUIT) {
+      input_state.quit_requested = 1;
+    }
+  }
+  update_keybits();
+}
+
+byte
+getkeys(void)
+{
+  pump_events();
+  return input_state.keybits;
 }
 
 int
 getonemultiplekey(void)
 {
-  return getkey();
+  return wait_for_key();
 }
 
 void
@@ -102,16 +134,43 @@ flushkeyboard(void)
 {
   SDL_PumpEvents();
   SDL_FlushEvents(SDL_KEYDOWN, SDL_KEYUP);
-  memset(keyz, 0, sizeof keyz);
+  input_state.keybits = 0;
+  input_state.last_key = 0;
+  input_state.quit_requested = 0;
 }
 
 int
 keywaiting(void)
 {
+  pump_events();
+  return (input_state.last_key != 0) || input_state.quit_requested;
+}
+
+int
+wait_for_key(void)
+{
   SDL_Event ev;
 
-  SDL_PumpEvents();
-  if(SDL_PeepEvents(&ev, 1, SDL_PEEKEVENT, SDL_KEYDOWN, SDL_KEYDOWN) > 0)
-    return 1;
-  return 0;
+  for(;;) {
+    int key = getkey();
+    if(key)
+      return key;
+
+    if(SDL_WaitEventTimeout(&ev, 50)) {
+      if(ev.type == SDL_KEYDOWN) {
+        input_state.last_key = ev.key.keysym.sym;
+        update_keybits();
+        key = (int)input_state.last_key;
+        input_state.last_key = 0;
+        return key;
+      } else if(ev.type == SDL_QUIT) {
+        input_state.quit_requested = 1;
+        return SDLK_ESCAPE;
+      } else {
+        update_keybits();
+      }
+    } else {
+      pump_events();
+    }
+  }
 }
