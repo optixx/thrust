@@ -1,7 +1,6 @@
 # Simplified build for SDL-based Thrust on macOS.
 
 SHELL        = /bin/sh
-INSTALL      = /usr/bin/install -c
 CC ?= gcc
 SDLCONFIG ?= sdl2-config
 PYTHON ?= python3
@@ -14,19 +13,8 @@ endif
 ifeq ($(strip $(SDL_CFLAGS)),)
 SDL_CFLAGS = -I/opt/homebrew/include/SDL2 -I/opt/homebrew/include -I/Library/Frameworks/SDL2.framework/Headers
 endif
-SDL_INCLUDE_FLAG := $(firstword $(filter -I%, $(SDL_CFLAGS)))
-SDL_INC_DIR := $(patsubst -I%,%,$(SDL_INCLUDE_FLAG))
-SDL_BASE_INCLUDE := $(patsubst %/SDL,%,$(SDL_INC_DIR))
-ifneq ($(SDL_BASE_INCLUDE),$(SDL_INC_DIR))
-SDL_CFLAGS := $(SDL_CFLAGS) -I$(SDL_BASE_INCLUDE)
-endif
 
-prefix ?= /usr/local
-exec_prefix ?= $(prefix)
-BINDIR ?= $(exec_prefix)/bin
-MANDIR ?= $(prefix)/man
-STATEDIR ?= $(prefix)/com
-DEB ?=
+STATEDIR ?= /usr/local/com
 
 HIGHSCORE    = thrust.highscore
 FULLHISCORE  = $(STATEDIR)/$(HIGHSCORE)
@@ -72,19 +60,13 @@ OBJS         = $(SOURCEOBJS) $(DATAOBJS) $(SOUNDITOBJS) $(SOUNDOBJS)
 SDL_OBJS     = $(addprefix $(SRC_OBJ_DIR)/, SDLkey.o SDL.o )
 ASSET_CS     = $(DATASEC)
 
-.PHONY: all clean TAGS dvi assets
+.PHONY: all clean assets
 
 all: sdlthrust
 
 clean:
 	rm -rf $(strip *~ core sdlthrust $(OBJS) $(SDL_OBJS) assets/*.bin .depend build)
 	rm -f build-stamp
-
-TAGS:
-	etags src/*.c -o src/TAGS
-
-dvi:
-	@echo No documentation available.
 
 sdlthrust: $(OBJS) $(SDL_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^ $(SDL_LIBS) $(LIBS)
