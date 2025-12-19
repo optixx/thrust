@@ -1,23 +1,17 @@
-.*.swp
-*.o
-Makefile.bindist
-build-stamp
-config.cache
-config.guess.debsave
-config.log
-config.status
-config.sub.debsave
-debian/debhelper.log
-debian/files
-debian/menu
-debian/postinst.debhelper
-debian/postrm.debhelper
-debian/substvars
-debian/tmp/
-src/config.h
-thrust
-thrust.pod
-xthrust
-config.guess
-config.sub
+# Generated binaries
 sdlthrust
+
+# Object files
+*.o
+
+
+# Asset intermediate files
+assets/*.bin
+
+# Build metadata
+.depend
+build-stamp
+
+# Editor swap files
+*~
+core
