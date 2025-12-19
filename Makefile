@@ -1,5 +1,5 @@
 # Generated automatically from Makefile.in by configure.
-# ./configure --prefix=/usr --exec-prefix=/usr --sharedstatedir=/var/games --bindir=/usr/games --mandir=/usr/share/man
+# ./configure 
 
 # Written by Peter Ekberg, peda@lysator.liu.se
 
@@ -8,27 +8,34 @@ CC           = gcc
 DD           = dd
 INSTALL      = /usr/bin/install -c
 
-NO_PBM       = 
-NO_SVGA      = 
-NO_X         = 
-SOUND        = yes
+NO_PBM       = yes
+NO_SVGA      = yes
+NO_X         = yes
+NO_SDL       = @no_sdl@
+SOUND        = 
 POD2MAN      = /usr/bin/pod2man --section=6
 
-prefix       = /usr
-exec_prefix  = /usr
-BINDIR       = /usr/games
-MANDIR       = /usr/share/man
-STATEDIR     = /var/games
+prefix       = /usr/local
+exec_prefix  = ${prefix}
+BINDIR       = ${exec_prefix}/bin
+MANDIR       = ${prefix}/man
+STATEDIR     = ${prefix}/com
 
-DEFINES      = $(strip -DHIGHSCOREFILE=\"$(FULLHISCORE)\" -DVERSION=\"$(VERSION)\" -DHAVE_CONFIG_H )
-OPTIMIZE     = -fomit-frame-pointer -O9 -s
-COMPILE      = -Wall -Wstrict-prototypes -Wmissing-prototypes -std=c99
-ALL_CFLAGS   = $(strip $(DEFINES) $(OPTIMIZE) $(COMPILE) )
-SVGA_LIBS    = -lvgagl -lvga
-X_LIBS       = -lSM -lICE   -lXext -lX11
-LDFLAGS      = 
+DEFINES      = $(strip \
+                 -DHIGHSCOREFILE=\"$(FULLHISCORE)\" \
+                 -DVERSION=\"$(VERSION)\" \
+                 -DHAVE_CONFIG_H)
+OPTIMIZE     =  -fomit-frame-pointer -O9 -s
+COMPILE      =  -Wall -Wstrict-prototypes -Wmissing-prototypes -std=gnu89 -I/opt/homebrew/include
+ALL_CFLAGS   = $(strip \
+                 $(DEFINES) $(OPTIMIZE) $(COMPILE) \
+                  )
+SVGA_LIBS    =  -lvgagl -lvga
+X_LIBS       =    -lXext -lX11
+SDL_LIBS     = -lSDL
+LDFLAGS      = -L/opt/homebrew/lib
 
-PBM_FLAGS    = -lppm -lpgm -lpbm -DVERSION=\"0.6\"
+PBM_FLAGS    =   -lppm -lpgm -lpbm -DVERSION=\"0.6\"
 
 MAN          = thrust.man
 HIGHSCORE    = thrust.highscore
@@ -64,9 +71,7 @@ endif
 X_OBJS       = $(addprefix src/, X11key.o X11.o)
 X_DATAOBJS   = $(addprefix datasrc/, icon48.o)
 SVGA_OBJS    = $(addprefix src/, svgakey.o ksyms.o svga.o)
-
 SDL_OBJS     = $(addprefix src/, SDLkey.o SDL.o)
-SDL_LIBS     = -lSDL
 
 TARFILE      = thrust-$(VERSION).src.tar
 BINTARFILE   = thrust-$(VERSION).bin.tar
@@ -91,7 +96,6 @@ BINDISTFILES = Makefile.bindist
             $(HELPPRG)
 
 .INTERMEDIATE: $(BIN8) datasrc/blks.bin
-
 
 # is there an easier way than doing all 8 combinations?
 ifeq ($(NO_X),yes)
@@ -151,6 +155,9 @@ endif
 ifneq ($(NO_X),yes)
 	$(INSTALL) xthrust $(DEB)/$(BINDIR)/xthrust
 endif
+ifneq ($(NO_SDL),yes)
+	$(INSTALL) sdlthrust $(DEB)/$(BINDIR)/sdlthrust
+endif
 #	@if test ! -d $(STATEDIR) ; then \
 #	  echo $(INSTALL) -d $(STATEDIR); \
 #	  $(INSTALL) -d $(STATEDIR); \
@@ -163,6 +170,7 @@ endif
 uninstall:
 	rm -i $(BINDIR)/thrust
 	rm -i $(BINDIR)/xthrust
+	rm -i $(BINDIR)/sdlthrust
 	rm -i $(FULLHISCORE)
 
 install-man: man
@@ -172,9 +180,7 @@ uninstall-man:
 	rm $(MANDIR)/man6/$(addsuffix .6,$(basename $(MAN)))
 
 clean:
-	rm -rf $(strip *~ core thrust xthrust $(OBJS) $(X_OBJS) \
-                       $(X_DATAOBJS) $(SVGA_OBJS) \
-                       $(HELPPRG) datasrc/blks*.bin .depend )
+	rm -rf $(strip *~ core thrust xthrust sdlthrust $(OBJS) $(X_OBJS) $(X_DATAOBJS) $(SVGA_OBJS) $(SDL_OBJS) $(HELPPRG) datasrc/blks*.bin .depend )
 
 distclean: clean
 	rm -f src/TAGS $(TARFILE).gz \
@@ -182,7 +188,7 @@ distclean: clean
               $(addsuffix .pod, $(basename $(MAN))) src/config.h
 
 mostlyclean:
-	rm -rf *~ core thrust xthrust $(SOURCEOBJS) $(X_OBJS) $(SVGA_OBJS)
+	rm -rf *~ core thrust xthrust sdlthrust $(SOURCEOBJS) $(X_OBJS) $(SVGA_OBJS) $(SDL_OBJS)
 
 realclean: distclean
 	rm -f $(patsubst %.o,%.c,$(X_DATAOBJS) $(SOUNDOBJS)) $(DATASEC) \
@@ -196,6 +202,9 @@ ifneq ($(NO_SVGA),yes)
 endif
 ifneq ($(NO_X),yes)
 	$(CC) -M $(patsubst %.o,%.c,$(X_OBJS) $(X_DATAOBJS)) >> .depend
+endif
+ifneq ($(NO_SDL),yes)
+	$(CC) -M $(patsubst %.o,%.c,$(SDL_OBJS)) >> .depend
 endif
 
 TAGS:
@@ -233,9 +242,10 @@ dist: man $(patsubst %.o,%.c,$(DATAOBJS) $(X_DATAOBJS) $(SOUNDOBJS))
 
 ifneq ($(NO_SVGA),yes)
 ifneq ($(NO_X),yes)
-bindist: thrust xthrust man
+ifneq ($(NO_SDL),yes)
+bindist: thrust xthrust sdlthrust man
 	mkdir thrust-$(VERSION)
-	cp -dpf $(DISTFILES) $(BINDISTFILES) xthrust thrust thrust-$(VERSION)
+	cp -dpf $(DISTFILES) $(BINDISTFILES) sdlthrust xthrust thrust thrust-$(VERSION)
 	mv thrust-$(VERSION)/Makefile.bindist thrust-$(VERSION)/Makefile
 	chmod -R g-w thrust-$(VERSION)/*
 	tar -cf $(BINTARFILE) thrust-$(VERSION)/*
@@ -243,11 +253,15 @@ bindist: thrust xthrust man
 	rm -rf thrust-$(VERSION)
 else
 bindist:
-	@echo Only for Linux with both X and SVGAlib.
+	@echo Only for Linux with X, SVGAlib and SDL.
 endif
 else
 bindist:
-	@echo Only for Linux with both X and SVGAlib.
+	@echo Only for Linux with X, SVGAlib and SDL.
+endif
+else
+bindist:
+	@echo Only for Linux with X, SVGAlib and SDL.
 endif
 
 
@@ -261,11 +275,6 @@ endif
 %.o: %.c
 	$(CC) $(ALL_CFLAGS) -c -o $(addprefix $(dir $<), $(notdir $@)) $<
 
-src/SDL.o: src/SDL.c
-	$(CC) $(ALL_CFLAGS) -c -o $(addprefix $(dir $<), $(notdir $@)) $< -std=c99
-
-src/SDLkey.o: src/SDLkey.c
-	$(CC) $(ALL_CFLAGS) -c -o $(addprefix $(dir $<), $(notdir $@)) $< -std=c99
 
 # Extract palette information.
 %.bin: %.pal
@@ -347,8 +356,7 @@ endif
 
 ifneq ($(NO_X),yes)
 xthrust: $(OBJS) $(X_OBJS) $(X_DATAOBJS)
-	$(CC) $(LDFLAGS) -o xthrust $(OBJS) $(X_OBJS) $(X_DATAOBJS) \
-              $(X_LIBS) $(LIBS)
+	$(CC) $(LDFLAGS) -o xthrust $(OBJS) $(X_OBJS) $(X_DATAOBJS) $(X_LIBS) $(LIBS)
 endif
 
 ifneq ($(NO_SDL),yes)

@@ -1,1 +1,7 @@
-/usr/share/misc/config.sub
+#!/bin/sh
+# Simple config.sub stub that defers to config.guess when no args are given.
+if [ $# -eq 0 ]; then
+  exec "$(dirname "$0")/config.guess" "$@"
+fi
+# When an argument is supplied, just output it unchanged.
+printf '%s\n' "$1"

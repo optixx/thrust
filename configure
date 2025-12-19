@@ -843,6 +843,12 @@ EOF
 
     ;;
 esac
+if test -n "$CFLAGS"; then
+  cflags="$cflags $CFLAGS"
+fi
+if test -n "$CPPFLAGS"; then
+  cflags="$cflags $CPPFLAGS"
+fi
     
 # Find a good install program.  We prefer a C program (faster),
 # so one script is as good as another.  But avoid the broken or
@@ -3819,4 +3825,3 @@ EOF
 chmod +x $CONFIG_STATUS
 rm -fr confdefs* $ac_clean_files
 test "$no_create" = yes || ${CONFIG_SHELL-/bin/sh} $CONFIG_STATUS || exit 1
-

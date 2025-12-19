@@ -9,7 +9,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#if defined(__APPLE__)
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #define __USE_BSD
 #include <math.h>
 
