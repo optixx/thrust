@@ -12,7 +12,7 @@
 #include "thrust.h"
 #include "fast_gr.h"
 #include "font5x5.h"
-#include "gr_drv.h"
+#include "graphics.h"
 
 byte *bild;
 

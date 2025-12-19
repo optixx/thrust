@@ -23,7 +23,7 @@
 #include "things.h"
 #include "font5x5.h"
 #include "thrust.h"
-#include "gr_drv.h"
+#include "graphics.h"
 
 #ifdef HAVE_SOUND
 #include "soundIt.h"

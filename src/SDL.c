@@ -14,7 +14,7 @@
 
 #include <SDL/SDL.h>
 #include "thrust.h"
-#include "gr_drv.h"
+#include "graphics.h"
 #include "options.h"
 
 static const int X = 320;

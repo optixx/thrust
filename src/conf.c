@@ -16,7 +16,7 @@
 #include "conf.h"
 #include "font5x5.h"
 #include "thrust.h"
-#include "gr_drv.h"
+#include "graphics.h"
 
 int
 getscancode(int old, int x, int y)

@@ -15,7 +15,7 @@
 #include "graphics.h"
 #include "things.h"
 #include "fast_gr.h"
-#include "gr_drv.h"
+#include "graphics.h"
 #include "thrust.h"
 
 void

@@ -19,7 +19,7 @@
 #include "hiscore.h"
 #include "graphics.h"
 #include "fast_gr.h"
-#include "gr_drv.h"
+#include "graphics.h"
 #include "font5x5.h"
 #include "things.h"
 #include "conf.h"

@@ -16,7 +16,7 @@
 #include "thrust.h"
 #include "font5x5.h"
 #include "fast_gr.h"
-#include "gr_drv.h"
+#include "graphics.h"
 
 byte chcolor=TEXTCOLOR;
 byte chpaper=0;
