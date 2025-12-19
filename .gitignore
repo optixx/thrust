@@ -12,6 +12,9 @@ assets/*.bin
 .depend
 build-stamp
 
+# Build output directory
+build/
+
 # Editor swap files
 *~
 core

@@ -41,6 +41,9 @@ BMP_BINARIES = $(foreach bmp,$(BMP_FILES),assets/$(call BMP_BASE,$(bmp)).bin)
 PAL_FILES    = $(wildcard assets/*.pal)
 PAL_BINARIES = $(foreach pal,$(PAL_FILES),assets/$(basename $(notdir $(pal))).bin)
 ASSET_BINARIES = $(sort $(BMP_BINARIES) $(PAL_BINARIES) assets/blks.bin)
+OBJDIR       = build
+SRC_OBJ_DIR  = $(OBJDIR)/src
+ASSET_OBJ_DIR = $(OBJDIR)/assets
 
 DEFINES      = $(strip -DHIGHSCOREFILE=\"$(FULLHISCORE)\" -DVERSION=\"$(VERSION)\" -DHAVE_CONFIG_H)
 WARNFLAGS    = -Wall -Wstrict-prototypes -Wmissing-prototypes
@@ -52,22 +55,22 @@ HELP_CFLAGS  = -DHAVE_CONFIG_H $(CFLAGS)
 LDFLAGS      =
 LIBS         = -lm
 
-	SOURCEOBJS   = $(addprefix src/, \
-	                 thrust.o fast_gr.o hiscore.o conf.o things.o init.o \
-	                 level.o font5x5.o graphics.o )
-	DATASEC      = $(addprefix assets/, \
-	                 blks.c ship.c shld.c colors.c bullet.c title.c demomove.c \
-	                 level1.c level2.c level3.c level4.c level5.c level6.c )
-	DATAOBJS     = $(addprefix assets/, font.o) $(patsubst %.c,%.o,$(DATASEC))
-	SOUNDITOBJS  = $(addprefix src/, soundIt.o)
-	SOUNDOBJS    = $(addprefix assets/, \
-	                 boom.o boom2.o harp.o thrust.o zero.o )
+SOURCEOBJS   = $(addprefix $(SRC_OBJ_DIR)/, \
+                 thrust.o fast_gr.o hiscore.o conf.o things.o init.o \
+                 level.o font5x5.o graphics.o )
+DATASEC      = $(addprefix assets/, \
+                 blks.c ship.c shld.c colors.c bullet.c title.c demomove.c \
+                 level1.c level2.c level3.c level4.c level5.c level6.c )
+DATAOBJS     = $(addprefix $(ASSET_OBJ_DIR)/, font.o) $(patsubst %.c,%.o,$(addprefix $(ASSET_OBJ_DIR)/,$(notdir $(DATASEC))))
+SOUNDITOBJS  = $(addprefix $(SRC_OBJ_DIR)/, soundIt.o)
+SOUNDOBJS    = $(addprefix $(ASSET_OBJ_DIR)/, \
+                 boom.o boom2.o harp.o thrust.o zero.o )
 ifeq ($(SOUND),yes)
 OBJS         = $(SOURCEOBJS) $(DATAOBJS) $(SOUNDITOBJS) $(SOUNDOBJS)
 else
 OBJS         = $(SOURCEOBJS) $(DATAOBJS)
 endif
-SDL_OBJS     = $(addprefix src/, SDLkey.o SDL.o )
+SDL_OBJS     = $(addprefix $(SRC_OBJ_DIR)/, SDLkey.o SDL.o )
 ASSET_CS     = $(DATASEC)
 
 .PHONY: all clean TAGS dvi assets
@@ -75,7 +78,7 @@ ASSET_CS     = $(DATASEC)
 all: sdlthrust
 
 clean:
-	rm -rf $(strip *~ core sdlthrust $(OBJS) $(SDL_OBJS) assets/*.bin .depend )
+	rm -rf $(strip *~ core sdlthrust $(OBJS) $(SDL_OBJS) assets/*.bin .depend build)
 	rm -f build-stamp
 
 TAGS:
@@ -92,8 +95,17 @@ assets: $(ASSET_BINARIES) $(ASSET_CS)
 assets/blks.bin: $(BIN8)
 	cat $^ > $@
 
-%.o: %.c
-	$(CC) $(ALL_CFLAGS) -c -o $(addprefix $(dir $<),$(notdir $@)) $<
+$(SRC_OBJ_DIR):
+	mkdir -p $@
+
+$(ASSET_OBJ_DIR):
+	mkdir -p $@
+
+$(SRC_OBJ_DIR)/%.o: src/%.c | $(SRC_OBJ_DIR)
+	$(CC) $(ALL_CFLAGS) -c -o $@ $<
+
+$(ASSET_OBJ_DIR)/%.o: assets/%.c | $(ASSET_OBJ_DIR)
+	$(CC) $(ALL_CFLAGS) -c -o $@ $<
 
 define BMP_TO_BIN_RULE
 assets/$(call BMP_BASE,$(1)).bin: $(1)
