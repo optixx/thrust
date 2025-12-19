@@ -30,7 +30,7 @@ getscancode(int old, int x, int y)
   printgs(x, y, str);
 
   displayscreen();
-  result = getonemultiplekey();
+  result = wait_for_key();
   if(!strcasecmp("Escape", keystring(result)))
     result = old;
   chcolor=0;
@@ -79,7 +79,7 @@ conf(void)
   fade_in();
 
   do {
-    keyname = keystring(getonemultiplekey());
+    keyname = keystring(wait_for_key());
 
     if(!strcasecmp("Cursor Up", keyname)
        || !strcasecmp("Keypad Up", keyname)

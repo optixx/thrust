@@ -123,12 +123,6 @@ getkeys(void)
   return input_state.keybits;
 }
 
-int
-getonemultiplekey(void)
-{
-  return wait_for_key();
-}
-
 void
 flushkeyboard(void)
 {
