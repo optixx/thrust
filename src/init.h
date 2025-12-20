@@ -4,7 +4,7 @@
 #ifndef INIT_H
 #define INIT_H
 
-#include "thrust_t.h"
+#include "helpers.h"
 
 void turnship(void);
 void makeshieldedship(void);

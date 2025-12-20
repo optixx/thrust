@@ -17,7 +17,7 @@
 #include "keyboard.h"
 #include "things.h"
 #include "thrust.h"
-#include "thrust_t.h"
+#include "helpers.h"
 
 #include "soundIt.h"
 #define NUM_SAMPLES 5

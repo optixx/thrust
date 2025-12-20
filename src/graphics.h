@@ -4,7 +4,7 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
-#include "thrust_t.h"
+#include "helpers.h"
 
 #define BBILDX (41)
 #define BBILDY (23)

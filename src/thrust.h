@@ -22,7 +22,7 @@
 
 #define REL_MASS 1.1
 
-#include "thrust_t.h"
+#include "helpers.h"
 
 /* How many levels and what they are named. */
 

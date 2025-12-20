@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 #include "soundIt.h"
-#include "thrust_t.h"
+#include "helpers.h"
 
 typedef struct
 {

@@ -4,7 +4,7 @@
 #ifndef FONT5X5_H
 #define FONT5X5_H
 
-#include "thrust_t.h"
+#include "helpers.h"
 
 extern uint8_t font[256][6];
 

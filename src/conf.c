@@ -13,7 +13,7 @@
 #include "graphics.h"
 #include "keyboard.h"
 #include "thrust.h"
-#include "thrust_t.h"
+#include "helpers.h"
 
 int getscancode(int old, int x, int y)
 {

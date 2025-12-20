@@ -1,7 +1,7 @@
 
 /* Written by Peter Ekberg, peda@lysator.liu.se */
 
-#include "../src/thrust_t.h"
+#include "../src/helpers.h"
 
 uint8_t font[256][6] = {{5, 0x00, 0x00, /*   */
                          0x00, 0x00, 0x00},

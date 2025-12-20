@@ -4,7 +4,7 @@
 #ifndef THINGS_H
 #define THINGS_H
 
-#include "thrust_t.h"
+#include "helpers.h"
 
 struct bulletdef
 {

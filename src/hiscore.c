@@ -8,7 +8,7 @@
 #include <string.h>
 
 #include "hiscore.h"
-#include "thrust_t.h"
+#include "helpers.h"
 
 highscoreentry highscorelist[HIGHSCORES];
 

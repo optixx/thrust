@@ -9,7 +9,7 @@ Version 0.90 December 19, 2025
 
 * Centralized the per-frame pacing in `src/thrust.c`: the main loop now measures `SDL_GetTicks()` and calls `SDL_Delay` to hold a steady 20 ms step instead of relying on `syncscreen()` for timing.
 
-* Switched the build to `-std=c11` and introduced clang-format/clang-tidy/cppcheck helpers (with scripts/Makefile targets) so the SDL2 port can modernize without manual bookkeeping.
+* Switched the build to `-std=c11`, renamed `src/thrust_t.h` to `src/helpers.h`, and introduced clang-format/clang-tidy/cppcheck helpers (with scripts/Makefile targets) so the SDL2 port can modernize without manual bookkeeping.
 
 Version 0.89c-sdl1-current
 

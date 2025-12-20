@@ -9,7 +9,7 @@
 #include "level.h"
 #include "things.h"
 #include "thrust.h"
-#include "thrust_t.h"
+#include "helpers.h"
 
 static unsigned manhattan_distance(uint32_t ax, uint32_t ay, uint32_t bx, uint32_t by)
 {

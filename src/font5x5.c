@@ -11,7 +11,7 @@
 #include "graphics.h"
 #include "keyboard.h"
 #include "thrust.h"
-#include "thrust_t.h"
+#include "helpers.h"
 
 uint8_t chcolor = TEXTCOLOR;
 uint8_t chpaper = 0;

@@ -20,7 +20,7 @@
 #include "options.h"
 #include "things.h"
 #include "thrust.h"
-#include "thrust_t.h"
+#include "helpers.h"
 
 #include "soundIt.h"
 
@@ -356,12 +356,12 @@ int game(int demo)
 
             if (alive && (actionbits & right_bit))
             {
-                DECR_WRAP(kdir, 0, 96);
+            decr_wrap(&kdir, 0, 96);
                 dir = kdir / 3;
             }
             if (alive && (actionbits & left_bit))
             {
-                INCR_WRAP(kdir, 96, 0);
+            incr_wrap(&kdir, 96, 0);
                 dir = kdir / 3;
             }
             if (alive && (actionbits & fire_bit))

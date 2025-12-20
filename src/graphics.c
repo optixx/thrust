@@ -12,7 +12,7 @@
 #include "graphics.h"
 #include "things.h"
 #include "thrust.h"
-#include "thrust_t.h"
+#include "helpers.h"
 
 uint8_t* bild;
 static uint8_t fuelblink;
@@ -285,7 +285,7 @@ void drawteleport(int tohere)
     syncscreen();
     for (i = 0; i < NR_TP + SZ_TP - 1; i++)
     {
-        for (k = MIN(SZ_TP - 1, i), j = MAX(i - (SZ_TP - 1), 0); j <= MIN(i, NR_TP - 1); k--, j++)
+        for (k = min_int(SZ_TP - 1, i), j = max_int(i - (SZ_TP - 1), 0); j <= min_int(i, NR_TP - 1); k--, j++)
             drawteleline(1, x1, y1, x2, y2, j, k);
         SDL_Delay(50);
         displayscreen();
@@ -298,12 +298,12 @@ void drawteleport(int tohere)
     putscr(bildx, bildy, 1);
 
     for (i = 0; i < NR_TP + SZ_TP - 1; i++)
-        for (k = MIN(SZ_TP - 1, i), j = MAX(i - (SZ_TP - 1), 0); j <= MIN(i, NR_TP - 1); k--, j++)
+        for (k = min_int(SZ_TP - 1, i), j = max_int(i - (SZ_TP - 1), 0); j <= min_int(i, NR_TP - 1); k--, j++)
             drawteleline(1, x1, y1, x2, y2, j, k);
     displayscreen();
     drawteleline(0, 0, 0, 0, 0, 0, 0);
     for (i = 0; i < NR_TP + SZ_TP - 1; i++)
-        for (k = MIN(SZ_TP - 1, i), j = MAX(i - (SZ_TP - 1), 0); j <= MIN(i, NR_TP - 1); k--, j++)
+    for (k = min_int(SZ_TP - 1, i), j = max_int(i - (SZ_TP - 1), 0); j <= min_int(i, NR_TP - 1); k--, j++)
             drawteleline(2, x1, y1, x2, y2, j, k);
 
     SDL_Delay(250);
@@ -312,7 +312,7 @@ void drawteleport(int tohere)
     drawteleline(0, 0, 0, 0, 0, 0, 0);
     for (i = 0; i < NR_TP + SZ_TP - 1; i++)
     {
-        for (k = MIN(SZ_TP - 1, i), j = MAX(i - (SZ_TP - 1), 0); j <= MIN(i, NR_TP - 1); k--, j++)
+        for (k = min_int(SZ_TP - 1, i), j = max_int(i - (SZ_TP - 1), 0); j <= min_int(i, NR_TP - 1); k--, j++)
             drawteleline(3, x1, y1, x2, y2, j, k);
         SDL_Delay(50);
         displayscreen();
@@ -746,13 +746,13 @@ uint32_t drawshuttle(void)
         if (ly > 64)
             ly = abs(ly - PBILDY);
         drawline(x1, y1 % PBILDY, x2, y2 % PBILDY, 11, wirestorage);
-        tmp = testcrash(wiremap, wirestorage, MAX(lx, ly) + 1, shield);
+        tmp = testcrash(wiremap, wirestorage, max_int(lx, ly) + 1, shield);
 #ifdef DEBUG2
         if (tmp)
         {
-            printf("Crash: Wire destroyed. By %d. Wirelength %d.\n", tmp, MAX(lx, ly) + 1);
+            printf("Crash: Wire destroyed. By %d. Wirelength %d.\n", tmp, max_int(lx, ly) + 1);
             printf("Wirestorage:");
-            for (debug2i = 0; debug2i < MAX(lx, ly) + 1; debug2i++)
+            for (debug2i = 0; debug2i < max_int(lx, ly) + 1; debug2i++)
                 printf(" %02x", *(wirestorage + debug2i));
             printf("\n");
             printf("Killer line: x1=%d, y1=%d, x2=%d, y2=%d\n", x1, y1 % PBILDY, x2, y2 % PBILDY);
@@ -760,7 +760,7 @@ uint32_t drawshuttle(void)
             SDL_Delay(10000);
         }
 #endif
-        crash = MAX(crash, tmp);
+        crash = max_int(crash, tmp);
     }
     /* Draw the shuttle */
     drawship(bildx + 154 + shipdx, (bildy + 82 + shipdy) % PBILDY,
@@ -770,7 +770,7 @@ uint32_t drawshuttle(void)
     if (tmp)
         printf("Crash: Ship destroyed. By %d.\n", tmp);
 #endif
-    crash = MAX(tmp, crash);
+    crash = max_int(tmp, crash);
     if (loaded || loadcontact)
     {
         if (loaded)
@@ -790,7 +790,7 @@ uint32_t drawshuttle(void)
         if (tmp)
             printf("Crash: Load destroyed. By %d.\n", tmp);
 #endif
-        crash = MAX(crash, tmp);
+        crash = max_int(crash, tmp);
     }
     return (crash);
 }

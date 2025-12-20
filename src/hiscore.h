@@ -4,7 +4,7 @@
 #ifndef HISCORE_H
 #define HISCORE_H
 
-#include "thrust_t.h"
+#include "helpers.h"
 
 #define HIGHSCORES (5)
 
