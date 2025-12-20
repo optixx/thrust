@@ -17,10 +17,20 @@
 #include "init.h"
 #include "keyboard.h"
 #include "level.h"
-#include "options.h"
 #include "things.h"
 #include "thrust.h"
 #include "helpers.h"
+
+static const char thrust_opt_string[] = "vhdz:s";
+
+static const struct option thrust_longopts[] = {
+    {"version", no_argument, 0, 'v'},
+    {"help", no_argument, 0, 'h'},
+    {"nodemo", no_argument, 0, 'd'},
+    {"zoom", required_argument, 0, 'z'},
+    {"smooth", no_argument, 0, 's'},
+    {0, 0, 0, 0}
+};
 
 #include "soundIt.h"
 
@@ -1135,9 +1145,7 @@ int main(int argc, char** argv)
 
     do
     {
-        static struct option longopts[] = {OPTS, {0, 0, 0, 0}};
-
-        optc = getopt_long_only(argc, argv, OPTC, longopts, (int*)0);
+        optc = getopt_long_only(argc, argv, thrust_opt_string, thrust_longopts, NULL);
         switch (optc)
         {
         case 'd': /* --nodemo */
