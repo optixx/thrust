@@ -14,6 +14,41 @@
 #include "thrust.h"
 #include "helpers.h"
 
+int insideblock(int blkx, int blky, int pblkx, int pblky, int sx, int sy)
+{
+    return ((blkx >= pblkx - sx) && (blkx < pblkx + BBILDX) && (blky >= pblky - sy) &&
+            (blky < pblky + BBILDY));
+}
+
+int insidepixel(int x, int y, int pixx, int pixy, int sx, int sy)
+{
+    return ((x > pixx - sx) && (x < pixx + PUSEX) && (y > pixy - sy) && (y < pixy + PUSEY));
+}
+
+void updateborder(int pblkx, int pblky, int bblkx, int bblky, int vx, int vy)
+{
+    uint32_t k;
+
+    if (vy <= 0) /* update bottom border */
+        for (k = 0; k < BBILDX; k++)
+            putblock(bblkx + k, (bblky + BBILDY - 1) % BBILDY,
+                     blocks + (*(bana + (pblkx + k) % lenx + ((pblky + BBILDY - 1) % leny) * lenx)
+                               << 6));
+    else /* update top border */
+        for (k = 0; k < BBILDX; k++)
+            putblock(bblkx + k, bblky,
+                     blocks + (*(bana + (pblkx + k) % lenx + (pblky % leny) * lenx) << 6));
+    if (vx > 0) /* update right border */
+        for (k = 0; k < BBILDY; k++)
+            putblock(bblkx + BBILDX - 1, (bblky + k) % BBILDY,
+                     blocks + (*(bana + (pblkx + BBILDX - 1) % lenx + ((pblky + k) % leny) * lenx)
+                               << 6));
+    else /* update left border */
+        for (k = 0; k < BBILDY; k++)
+            putblock(bblkx, (bblky + k) % BBILDY,
+                     blocks + (*(bana + pblkx % lenx + ((pblky + k) % leny) * lenx) << 6));
+}
+
 uint8_t* bild;
 static uint8_t fuelblink;
 
