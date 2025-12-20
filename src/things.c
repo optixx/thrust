@@ -3,18 +3,7 @@
 
 #include <unistd.h>
 
-#ifdef HAVE_VALUES_H
-#include <values.h>
-#else
 #include <limits.h>
-#ifndef MAXINT
-#define MAXINT INT_MAX
-#endif
-#ifndef MAXLONG
-#define MAXLONG LONG_MAX
-#endif
-#endif
-
 #include <math.h>
 #include <stdlib.h>
 
@@ -555,7 +544,7 @@ int closestfuel(int x, int y)
     uint32_t i, which = 0;
     thing* thingptr;
     int dx, dy;
-    int minimum = MAXINT, d;
+    int minimum = INT_MAX, d;
     int hit = 0;
 
     for (i = 0, thingptr = things; i < nrthings; i++, thingptr++)
@@ -582,7 +571,7 @@ int closestbutton(int x, int y)
     uint32_t i, which = 0;
     thing* thingptr;
     int dx, dy;
-    int minimum = MAXINT, d;
+    int minimum = INT_MAX, d;
     int hit = 0;
 
     for (i = 0, thingptr = things; i < nrthings; i++, thingptr++)
@@ -608,7 +597,7 @@ void hit(uint32_t x, uint32_t y, uint32_t crash, uint32_t owner)
     uint32_t i, which = 0;
     thing* thingptr;
     long dx, dy;
-    long minimum = MAXLONG, d;
+    long minimum = LONG_MAX, d;
     int hit = 0;
     int kill = 1;
 
