@@ -19,12 +19,6 @@
 #define CHAN_3 2
 #define CHAN_4 3
 
-#define SND_BOOM 0
-#define SND_BOOM2 1
-#define SND_HARP 2
-#define SND_THRUST 3
-#define SND_ZERO 4
-
 uint32_t nrthings = 0;
 uint32_t nrsliders = 0;
 uint32_t nrbarriers = 0;

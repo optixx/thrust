@@ -11,7 +11,7 @@
 #include "conf.h"
 #include "font5x5.h"
 #include "graphics.h"
-#include "keyboard.h"
+#include "input.h"
 #include "thrust.h"
 #include "helpers.h"
 

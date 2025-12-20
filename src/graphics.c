@@ -17,6 +17,7 @@
 uint8_t* bild;
 static uint8_t fuelblink;
 
+
 void putscr(int x, int y, int force_draw)
 {
     static int counter = 0;

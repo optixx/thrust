@@ -1,5 +1,5 @@
 // SDL2 output for thrust
-// input handled in SDLkey.c
+// input handled in input.c
 
 #include <assert.h>
 #include <stdlib.h>

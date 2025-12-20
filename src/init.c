@@ -14,7 +14,7 @@
 #include "font5x5.h"
 #include "graphics.h"
 #include "init.h"
-#include "keyboard.h"
+#include "input.h"
 #include "things.h"
 #include "thrust.h"
 #include "helpers.h"
@@ -27,11 +27,6 @@
 #define CHAN_2 1
 #define CHAN_3 2
 #define CHAN_4 3
-#define SND_BOOM 0
-#define SND_BOOM2 1
-#define SND_HARP 2
-#define SND_THRUST 3
-#define SND_ZERO 4
 Sample snd[NUM_SAMPLES];
 
 void turnship(void)

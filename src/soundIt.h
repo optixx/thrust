@@ -73,4 +73,14 @@ Snd_reset(enum snd_channel channel);*/
 /*void
 Snd_reset(void);*/
 
+#define CHAN_1 0
+#define CHAN_2 1
+#define CHAN_3 2
+#define CHAN_4 3
+#define SND_BOOM 0
+#define SND_BOOM2 1
+#define SND_HARP 2
+#define SND_THRUST 3
+#define SND_ZERO 4
+
 #endif

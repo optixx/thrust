@@ -100,6 +100,8 @@ extern uint8_t shield;
 extern uint8_t colorr, colorg, colorb;
 extern double gamma_correction;
 extern int skip_frames;
+extern int nodemo;
+extern int Thrust_Is_On;
 
 #define GAMMA(x) ((int)(255 * pow((x) / 255.0, 1 / gamma_correction)))
 #define TEXTCOLOR (32)
@@ -116,15 +118,5 @@ void fade_out(void);
 void pause_message(void);
 void escape_message(void);
 uint8_t whatkeys(void);
-uint8_t nextmove(int reset);
-void gamestatusframe(void);
-void gamestatus(int lives, int fuel, int score);
 int game(int demo);
-void pressanykey(void);
-int instructions(void);
-int about(void);
-char* enterhighscorename(void);
-int showhighscores(void);
-void newhighscore(void);
-options menu(void);
 #endif /* THRUST_H */

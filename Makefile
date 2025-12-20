@@ -43,7 +43,7 @@ LDFLAGS      =
 LIBS         = -lm
 
 SOURCEOBJS   = $(addprefix $(SRC_OBJ_DIR)/, \
-                 thrust.o hiscore.o conf.o things.o init.o \
+                 thrust.o game.o menu.o pref.o hud.o hiscore.o conf.o things.o init.o \
                  level.o font5x5.o graphics.o )
 DATASEC      = $(addprefix assets/, \
                  blks.c ship.c shld.c colors.c bullet.c title.c demomove.c \
@@ -53,7 +53,7 @@ SOUNDITOBJS  = $(addprefix $(SRC_OBJ_DIR)/, soundIt.o)
 SOUNDOBJS    = $(addprefix $(ASSET_OBJ_DIR)/, \
                  boom.o boom2.o harp.o thrust.o zero.o )
 OBJS         = $(SOURCEOBJS) $(DATAOBJS) $(SOUNDITOBJS) $(SOUNDOBJS)
-SDL_OBJS     = $(addprefix $(SRC_OBJ_DIR)/, SDLkey.o SDL.o )
+SDL_OBJS     = $(addprefix $(SRC_OBJ_DIR)/, input.o SDL.o )
 ASSET_CS     = $(DATASEC)
 
 .PHONY: all clean assets
