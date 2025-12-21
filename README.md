@@ -1,7 +1,10 @@
+<p align="center">
+  <img width="480" src="thrust.png" alt="Launch screen capture"/>
+</p>
 
 Thrust
 
-This repository now maintains the modern SDL2-based port of Thrust on macOS. All of the legacy SVGA, X11, DirectX, and other platform-specific backends have been removed so the codebase only builds and runs with SDL2/modern macOS tooling.
+This repository now maintains the modern SDL2-based port of [Thrust](https://en.wikipedia.org/wiki/Thrust_(video_game)) on macOS. All of the legacy SVGA, X11, DirectX, and other platform-specific backends have been removed so the codebase only builds and runs with SDL2/modern macOS tooling.
 
 Build instructions:
 
