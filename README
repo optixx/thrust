@@ -6,14 +6,16 @@ This repository now maintains the modern SDL2-based port of Thrust on macOS. All
 Build instructions:
 
   * `make all` – rebuilds the assets (via `helpers/asset_tool.py`) and compiles `sdlthrust`.
-  * `make clean` – deletes generated assets, object files, and the `sdlthrust` binary.
+  * `make clean` – deletes generated assets, object files, the `sdlthrust` binary, and any Wasm bundle under `wasm-dist/`.
   * Set `SDLCONFIG` to a custom `sdl2-config` if you do not want to use the system default; the makefile falls back to `/opt/homebrew` and `/Library/Frameworks` paths on macOS.
   * `make format` – runs `clang-format` across the tracked `.c/.h` files.
   * `make lint` – runs `clang-tidy` (with the bundled `.clang-tidy` policy) plus `cppcheck` to highlight modernization opportunities.
+  * `make wasm` (or `make wasm-build`) – compiles the same sources for WebAssembly with SDL2 via Emscripten (`sdlthrust.js/.wasm` live in `wasm-dist/`).
+  * `make serve-wasm` – launches `helpers/serve_wasm.py` so you can open `wasm-dist/index.html` in the browser; pass `PORT=` if you need a different port.
 
 Configuration defaults and key mappings live in the sample `thrust.rc` shipped with the project. The game looks for `thrust.rc` in the current working directory so you can clone the repo and run `./sdlthrust` alongside that file without touching your home directory.
 
-You can also pass `-s`/`--smooth` to `sdlthrust` to request linear interpolation while zooming the viewport (it still only supports integer zoom factors 1–6). Without the flag the renderer uses nearest-neighbor scaling.
+You can also pass `-s`/`--smooth` to `sdlthrust` to request linear interpolation while zooming the viewport (it still only supports integer zoom factors 1–6). Without the flag the renderer uses nearest-neighbor scaling. The Wasm launcher automatically forwards `-z`/`--zoom` based on the selected canvas zoom level and accepts a `zoom=` query parameter to preconfigure the zoom (default 2×).
 
 SDL sound is always enabled — there is no `HAVE_SOUND` guard anymore — so the SDL mixer is the only supported sound backend.
 
