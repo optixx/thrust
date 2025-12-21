@@ -43,8 +43,8 @@ LDFLAGS      =
 LIBS         = -lm
 
 SOURCEOBJS   = $(addprefix $(SRC_OBJ_DIR)/, \
-                 thrust.o game.o menu.o pref.o hud.o hiscore.o conf.o things.o init.o \
-                 level.o font5x5.o graphics.o )
+                 thrust.o game.o state.o menu.o menu_state.o demo_state.o screen_state.o pref.o hud.o hiscore.o conf.o things.o init.o \
+                 level.o font5x5.o graphics.o assets.o world.o )
 DATASEC      = $(addprefix assets/, \
                  blks.c ship.c shld.c colors.c bullet.c title.c demomove.c \
                  level1.c level2.c level3.c level4.c level5.c level6.c )

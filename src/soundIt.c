@@ -4,22 +4,11 @@
 #include <SDL.h>
 #include <stdlib.h>
 
-#include "soundIt.h"
 #include "helpers.h"
+#include "soundIt.h"
+#include "sound_state.h"
 
-typedef struct
-{
-    const Sample* sample;
-    int position;
-} ChannelState;
-
-static const Sample* S_sounds = NULL;
-static int S_num_sounds = 0;
-static int S_num_channels = 0;
-static SDL_AudioDeviceID S_audio = 0;
-static ChannelState* S_channels = NULL;
-
-static Uint8 mix_sample(ChannelState* chan)
+static Uint8 mix_sample(channel_state_t* chan)
 {
     if (chan->sample == NULL)
         return 128; /* silence in unsigned 8-bit */
@@ -44,16 +33,16 @@ static Uint8 mix_sample(ChannelState* chan)
 
 static void audio_callback(void* userdata, Uint8* stream, int len)
 {
-    ChannelState* channels = (ChannelState*)userdata;
-    int samples = len; /* AUDIO_U8 mono: 1 uint8_t per sample */
+    sound_state_t* state = (sound_state_t*)userdata;
+    int samples = len;
     int i;
 
     while (samples--)
     {
         int mixed = 0;
-        for (i = 0; i < S_num_channels; i++)
+        for (i = 0; i < state->num_channels; i++)
         {
-            mixed += (int)mix_sample(&channels[i]) - 128;
+            mixed += (int)mix_sample(&state->channels[i]) - 128;
         }
         mixed += 128;
         if (mixed < 0)
@@ -80,63 +69,76 @@ int Snd_init(int num_snd, const Sample* sa, int frequency, int channels)
     desired.channels = 1;
     desired.samples = 512;
     desired.callback = audio_callback;
-    desired.userdata = NULL; /* set below once channels are allocated */
+    desired.userdata = NULL;
 
-    S_channels = (ChannelState*)calloc((size_t)channels, sizeof(ChannelState));
-    if (S_channels == NULL)
+    sound_state_t* state = sound_state();
+
+    state->channels = (channel_state_t*)calloc((size_t)channels, sizeof(channel_state_t));
+    if (state->channels == NULL)
     {
         SDL_QuitSubSystem(SDL_INIT_AUDIO);
         return EXIT_FAILURE;
     }
 
-    desired.userdata = S_channels;
+    desired.userdata = state;
 
-    S_audio = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, 0);
-    if (S_audio == 0)
+    state->audio = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, 0);
+    if (state->audio == 0)
     {
-        free(S_channels);
-        S_channels = NULL;
+        free(state->channels);
+        state->channels = NULL;
         SDL_QuitSubSystem(SDL_INIT_AUDIO);
         return EXIT_FAILURE;
     }
 
-    S_sounds = sa;
-    S_num_sounds = num_snd;
-    S_num_channels = channels;
+    state->sounds = sa;
+    state->num_sounds = num_snd;
+    state->num_channels = channels;
 
-    SDL_PauseAudioDevice(S_audio, 0);
+    SDL_PauseAudioDevice(state->audio, 0);
     return EXIT_SUCCESS;
 }
 
 int Snd_restore(void)
 {
-    if (S_audio != 0)
+    sound_state_t* state = sound_state();
+
+    if (state->audio != 0)
     {
-        SDL_CloseAudioDevice(S_audio);
-        S_audio = 0;
+        SDL_CloseAudioDevice(state->audio);
+        state->audio = 0;
     }
-    free(S_channels);
-    S_channels = NULL;
-    S_sounds = NULL;
-    S_num_sounds = 0;
-    S_num_channels = 0;
+    free(state->channels);
+    state->channels = NULL;
+    state->sounds = NULL;
+    state->num_sounds = 0;
+    state->num_channels = 0;
     SDL_QuitSubSystem(SDL_INIT_AUDIO);
     return EXIT_SUCCESS;
 }
 
 int Snd_effect(int sound_num, int channel)
 {
-    if (S_audio == 0 || S_channels == NULL)
+    sound_state_t* state = sound_state();
+
+    if (state->audio == 0 || state->channels == NULL)
         return EXIT_FAILURE;
-    if (sound_num < 0 || sound_num >= S_num_sounds)
+    if (sound_num < 0 || sound_num >= state->num_sounds)
         return EXIT_FAILURE;
-    if (channel < 0 || channel >= S_num_channels)
+    if (channel < 0 || channel >= state->num_channels)
         return EXIT_FAILURE;
 
-    SDL_LockAudioDevice(S_audio);
-    S_channels[channel].sample = &S_sounds[sound_num];
-    S_channels[channel].position = 0;
-    SDL_UnlockAudioDevice(S_audio);
+    SDL_LockAudioDevice(state->audio);
+    state->channels[channel].sample = &state->sounds[sound_num];
+    state->channels[channel].position = 0;
+    SDL_UnlockAudioDevice(state->audio);
 
     return EXIT_SUCCESS;
+}
+
+sound_state_t*
+sound_state(void)
+{
+    static sound_state_t current_state = {0};
+    return &current_state;
 }

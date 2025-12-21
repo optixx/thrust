@@ -13,6 +13,10 @@
 #include "things.h"
 #include "thrust.h"
 #include "helpers.h"
+#include "assets.h"
+#include "world.h"
+#include "state.h"
+#include "level.h"
 
 int insideblock(int blkx, int blky, int pblkx, int pblky, int sx, int sy)
 {
@@ -28,29 +32,31 @@ int insidepixel(int x, int y, int pixx, int pixy, int sx, int sy)
 void updateborder(int pblkx, int pblky, int bblkx, int bblky, int vx, int vy)
 {
     uint32_t k;
+    uint8_t* blocks = assets_blocks();
 
     if (vy <= 0) /* update bottom border */
         for (k = 0; k < BBILDX; k++)
             putblock(bblkx + k, (bblky + BBILDY - 1) % BBILDY,
-                     blocks + (*(bana + (pblkx + k) % lenx + ((pblky + BBILDY - 1) % leny) * lenx)
+                     blocks + (*(level_buffer() + (pblkx + k) % world_state()->lenx + ((pblky + BBILDY - 1) % world_state()->leny) * world_state()->lenx)
                                << 6));
     else /* update top border */
         for (k = 0; k < BBILDX; k++)
             putblock(bblkx + k, bblky,
-                     blocks + (*(bana + (pblkx + k) % lenx + (pblky % leny) * lenx) << 6));
+                     blocks + (*(level_buffer() + (pblkx + k) % world_state()->lenx + (pblky % world_state()->leny) * world_state()->lenx) << 6));
     if (vx > 0) /* update right border */
         for (k = 0; k < BBILDY; k++)
             putblock(bblkx + BBILDX - 1, (bblky + k) % BBILDY,
-                     blocks + (*(bana + (pblkx + BBILDX - 1) % lenx + ((pblky + k) % leny) * lenx)
+                     blocks + (*(level_buffer() + (pblkx + BBILDX - 1) % world_state()->lenx + ((pblky + k) % world_state()->leny) * world_state()->lenx)
                                << 6));
     else /* update left border */
         for (k = 0; k < BBILDY; k++)
             putblock(bblkx, (bblky + k) % BBILDY,
-                     blocks + (*(bana + pblkx % lenx + ((pblky + k) % leny) * lenx) << 6));
+                     blocks + (*(level_buffer() + pblkx % world_state()->lenx + ((pblky + k) % world_state()->leny) * world_state()->lenx) << 6));
 }
 
 uint8_t* bild;
 static uint8_t fuelblink;
+static int skip_frames = 0;
 
 
 void putscr(int x, int y, int force_draw)
@@ -216,16 +222,17 @@ uint32_t testcrash(uint8_t* object, uint8_t* storage, uint32_t len, uint8_t shie
 void writeblock(uint32_t bx, uint32_t by, uint8_t block)
 {
     uint32_t tempx, tempy;
+    uint8_t* blocks = assets_blocks();
 
-    *(bana + bx + by * lenx) = block;
+    *(level_buffer() + bx + by * world_state()->lenx) = block;
     tempx = bx;
     tempy = by;
-    if (pblockx + BBILDX > (int)lenx && tempx < BBILDX)
-        tempx += lenx;
-    if (pblocky + BBILDY > (int)leny && tempy < BBILDY)
-        tempy += leny;
-    if (insideblock(tempx, tempy, pblockx, pblocky, 0, 0))
-        putblock(bblockx - pblockx + tempx, tempy % BBILDY, blocks + (block << 6));
+    if (world_state()->pblockx + BBILDX > (int)world_state()->lenx && tempx < BBILDX)
+        tempx += world_state()->lenx;
+    if (world_state()->pblocky + BBILDY > (int)world_state()->leny && tempy < BBILDY)
+        tempy += world_state()->leny;
+    if (insideblock(tempx, tempy, world_state()->pblockx, world_state()->pblocky, 0, 0))
+        putblock(world_state()->bblockx - world_state()->pblockx + tempx, tempy % BBILDY, blocks + (block << 6));
 }
 
 #define NR_TP (6)
@@ -251,7 +258,7 @@ void drawteleline(int round, int x1, int y1, int x2, int y2, int j, int k)
             putpixel(x1 - (j + 2) * DIFF_TP - k + SHIFT_TP, 24 + y1 + l, 65);
             putpixel(x1 + l, 24 + y1 + (j + 2) * DIFF_TP + k - SHIFT_TP, 65);
             putpixel(x1 + l, 24 + y1 - (j + 2) * DIFF_TP - k + SHIFT_TP, 65);
-            if (loaded)
+            if (world_state()->loaded)
             {
                 putpixel(x2 + (j + 2) * DIFF_TP + k - SHIFT_TP, 24 + y2 + l, 65);
                 putpixel(x2 - (j + 2) * DIFF_TP - k + SHIFT_TP, 24 + y2 + l, 65);
@@ -263,26 +270,26 @@ void drawteleline(int round, int x1, int y1, int x2, int y2, int j, int k)
     case 2:
         for (l = -2; l <= 2; l++)
         {
-            *(tm++) = *(bild + (bildx + x1 + (j + 2) * DIFF_TP + k - SHIFT_TP) +
-                        ((bildy + y1 + l) % PBILDY) * PBILDX * 2);
-            *(tm++) = *(bild + (bildx + x1 - (j + 2) * DIFF_TP - k + SHIFT_TP) +
-                        ((bildy + y1 + l) % PBILDY) * PBILDX * 2);
-            *(tm++) = *(bild + (bildx + x1 + l) +
-                        ((bildy + y1 + (j + 2) * DIFF_TP + k - SHIFT_TP) % PBILDY) * PBILDX * 2);
-            *(tm++) = *(bild + (bildx + x1 + l) +
-                        ((bildy + y1 - (j + 2) * DIFF_TP - k + SHIFT_TP) % PBILDY) * PBILDX * 2);
-            if (loaded)
+            *(tm++) = *(bild + (world_state()->bildx + x1 + (j + 2) * DIFF_TP + k - SHIFT_TP) +
+                        ((world_state()->bildy + y1 + l) % PBILDY) * PBILDX * 2);
+            *(tm++) = *(bild + (world_state()->bildx + x1 - (j + 2) * DIFF_TP - k + SHIFT_TP) +
+                        ((world_state()->bildy + y1 + l) % PBILDY) * PBILDX * 2);
+            *(tm++) = *(bild + (world_state()->bildx + x1 + l) +
+                        ((world_state()->bildy + y1 + (j + 2) * DIFF_TP + k - SHIFT_TP) % PBILDY) * PBILDX * 2);
+            *(tm++) = *(bild + (world_state()->bildx + x1 + l) +
+                        ((world_state()->bildy + y1 - (j + 2) * DIFF_TP - k + SHIFT_TP) % PBILDY) * PBILDX * 2);
+            if (world_state()->loaded)
             {
-                *(tm++) = *(bild + (bildx + x2 + (j + 2) * DIFF_TP + k - SHIFT_TP) +
-                            ((bildy + y2 + l) % PBILDY) * PBILDX * 2);
-                *(tm++) = *(bild + (bildx + x2 - (j + 2) * DIFF_TP - k + SHIFT_TP) +
-                            ((bildy + y2 + l) % PBILDY) * PBILDX * 2);
+                *(tm++) = *(bild + (world_state()->bildx + x2 + (j + 2) * DIFF_TP + k - SHIFT_TP) +
+                            ((world_state()->bildy + y2 + l) % PBILDY) * PBILDX * 2);
+                *(tm++) = *(bild + (world_state()->bildx + x2 - (j + 2) * DIFF_TP - k + SHIFT_TP) +
+                            ((world_state()->bildy + y2 + l) % PBILDY) * PBILDX * 2);
                 *(tm++) =
-                    *(bild + (bildx + x2 + l) +
-                      ((bildy + y2 + (j + 2) * DIFF_TP + k - SHIFT_TP) % PBILDY) * PBILDX * 2);
+                    *(bild + (world_state()->bildx + x2 + l) +
+                      ((world_state()->bildy + y2 + (j + 2) * DIFF_TP + k - SHIFT_TP) % PBILDY) * PBILDX * 2);
                 *(tm++) =
-                    *(bild + (bildx + x2 + l) +
-                      ((bildy + y2 - (j + 2) * DIFF_TP - k + SHIFT_TP) % PBILDY) * PBILDX * 2);
+                    *(bild + (world_state()->bildx + x2 + l) +
+                      ((world_state()->bildy + y2 - (j + 2) * DIFF_TP - k + SHIFT_TP) % PBILDY) * PBILDX * 2);
             }
         }
         break;
@@ -293,7 +300,7 @@ void drawteleline(int round, int x1, int y1, int x2, int y2, int j, int k)
             putpixel(x1 - (j + 2) * DIFF_TP - k + SHIFT_TP, 24 + y1 + l, *(tm++));
             putpixel(x1 + l, 24 + y1 + (j + 2) * DIFF_TP + k - SHIFT_TP, *(tm++));
             putpixel(x1 + l, 24 + y1 - (j + 2) * DIFF_TP - k + SHIFT_TP, *(tm++));
-            if (loaded)
+            if (world_state()->loaded)
             {
                 putpixel(x2 + (j + 2) * DIFF_TP + k - SHIFT_TP, 24 + y2 + l, *(tm++));
                 putpixel(x2 - (j + 2) * DIFF_TP - k + SHIFT_TP, 24 + y2 + l, *(tm++));
@@ -310,12 +317,12 @@ void drawteleport(int tohere)
     int i, j, k;
     int x1, y1, x2, y2;
 
-    x1 = x2 = 154 + 7 + shipdx;
-    y1 = y2 = 82 + 7 + shipdy;
-    if (loaded)
+    x1 = x2 = 154 + 7 + world_state()->shipdx;
+    y1 = y2 = 82 + 7 + world_state()->shipdy;
+    if (world_state()->loaded)
     {
-        x2 = 161 - (int)((252 - loadpoint) * cos(alpha) / 7.875);
-        y2 = 89 + (int)((252 - loadpoint) * sin(alpha) / 7.875);
+        x2 = 161 - (int)((252 - world_state()->loadpoint) * cos(world_state()->alpha) / 7.875);
+        y2 = 89 + (int)((252 - world_state()->loadpoint) * sin(world_state()->alpha) / 7.875);
     }
 
     syncscreen();
@@ -331,7 +338,7 @@ void drawteleport(int tohere)
     syncscreen();
     if (tohere)
         drawshuttle();
-    putscr(bildx, bildy, 1);
+    putscr(world_state()->bildx, world_state()->bildy, 1);
 
     for (i = 0; i < NR_TP + SZ_TP - 1; i++)
         for (k = min_int(SZ_TP - 1, i), j = max_int(i - (SZ_TP - 1), 0); j <= min_int(i, NR_TP - 1); k--, j++)
@@ -571,22 +578,24 @@ void drawbullets(void)
     bullet* bulletptr;
     uint32_t tempx, tempy;
     uint8_t target;
+    uint8_t* bulletmap = assets_bulletmap();
+    uint8_t* bulletstorage = assets_bulletstorage();
 
     for (l = 0, bulletptr = bullets; l < maxbullets; l++, bulletptr++)
         if ((*bulletptr).life)
         {
             tempx = (*bulletptr).x >> 3;
             tempy = (*bulletptr).y >> 3;
-            if (pixx + PUSEX > (int)lenx3 && tempx < PUSEX)
-                tempx += lenx3;
-            if (pixy + PUSEY > (int)leny3 && tempy < PUSEY)
-                tempy += leny3;
-            if (insidepixel(tempx, tempy, pixx, pixy, 4, 4))
-                drawsquare(bildx + tempx - pixx, tempy % PBILDY,
+            if (world_state()->pixx + PUSEX > (int)world_state()->lenx3 && tempx < PUSEX)
+                tempx += world_state()->lenx3;
+            if (world_state()->pixy + PUSEY > (int)world_state()->leny3 && tempy < PUSEY)
+                tempy += world_state()->leny3;
+            if (insidepixel(tempx, tempy, world_state()->pixx, world_state()->pixy, 4, 4))
+                drawsquare(world_state()->bildx + tempx - world_state()->pixx, tempy % PBILDY,
                            bulletmap + ((*bulletptr).dir << 4), bulletstorage + (l << 4), 4, 4);
             else
             {
-                target = *(bana + (tempx >> 3) % lenx + ((tempy >> 3) % leny) * lenx);
+                target = *(level_buffer() + (tempx >> 3) % world_state()->lenx + ((tempy >> 3) % world_state()->leny) * world_state()->lenx);
                 if (target != 32)
                 {
                     /* Add code to take care of offscreen hits */
@@ -625,7 +634,7 @@ void drawbullets(void)
                         case '\\':
                         case '^':
                         case '_':
-                            hit((tempx + 3) % lenx3, (tempy + 3) % leny3, 4, (*bulletptr).owner);
+                            hit((tempx + 3) % world_state()->lenx3, (tempy + 3) % world_state()->leny3, 4, (*bulletptr).owner);
                         }
                     (*bulletptr).life = 0;
                 }
@@ -639,27 +648,29 @@ void undrawbullets(void)
     bullet* bulletptr;
     uint32_t tempx, tempy;
     uint32_t crash;
+    uint8_t* bulletmap = assets_bulletmap();
+    uint8_t* bulletstorage = assets_bulletstorage();
 
     for (l = maxbullets - 1, bulletptr = bullets + maxbullets - 1; l >= 0; l--, bulletptr--)
         if ((*bulletptr).life)
         {
             tempx = (*bulletptr).x >> 3;
             tempy = (*bulletptr).y >> 3;
-            if (pixx + PUSEX > (int)lenx3 && tempx < PUSEX)
-                tempx += lenx3;
-            if (pixy + PUSEY > (int)leny3 && tempy < PUSEY)
-                tempy += leny3;
-            if (insidepixel(tempx, tempy, pixx, pixy, 4, 4))
+            if (world_state()->pixx + PUSEX > (int)world_state()->lenx3 && tempx < PUSEX)
+                tempx += world_state()->lenx3;
+            if (world_state()->pixy + PUSEY > (int)world_state()->leny3 && tempy < PUSEY)
+                tempy += world_state()->leny3;
+            if (insidepixel(tempx, tempy, world_state()->pixx, world_state()->pixy, 4, 4))
             {
                 crash =
                     testcrash(bulletmap + ((*bulletptr).dir << 4), bulletstorage + (l << 4), 16, 0);
                 if (crash)
                 {
                     if (crash >= 4)
-                        hit((tempx + 3) % lenx3, (tempy + 3) % leny3, crash, (*bulletptr).owner);
+                        hit((tempx + 3) % world_state()->lenx3, (tempy + 3) % world_state()->leny3, crash, (*bulletptr).owner);
                     (*bulletptr).life = 0;
                 }
-                undrawsquare(bildx + tempx - pixx, tempy % PBILDY, bulletstorage + (l << 4), 4, 4);
+                undrawsquare(world_state()->bildx + tempx - world_state()->pixx, tempy % PBILDY, bulletstorage + (l << 4), 4, 4);
             }
         }
 }
@@ -670,20 +681,21 @@ void drawfragments(void)
     fragment* fragmentptr;
     uint32_t tempx, tempy;
     static uint8_t fragmentmap[4] = {12, 12, 12, 12};
+    uint8_t* fragmentstorage = assets_fragmentstorage();
 
     for (l = 0, fragmentptr = fragments; l < maxfragments; l++, fragmentptr++)
         if ((*fragmentptr).life)
         {
             tempx = (*fragmentptr).x >> 3;
             tempy = (*fragmentptr).y >> 3;
-            if (pixx + PUSEX > (int)lenx3 && tempx < PUSEX)
-                tempx += lenx3;
-            if (pixy + PUSEY > (int)leny3 && tempy < PUSEY)
-                tempy += leny3;
-            if (insidepixel(tempx, tempy, pixx, pixy, 2, 2))
-                drawsquare(bildx + tempx - pixx, tempy % PBILDY, fragmentmap,
+            if (world_state()->pixx + PUSEX > (int)world_state()->lenx3 && tempx < PUSEX)
+                tempx += world_state()->lenx3;
+            if (world_state()->pixy + PUSEY > (int)world_state()->leny3 && tempy < PUSEY)
+                tempy += world_state()->leny3;
+            if (insidepixel(tempx, tempy, world_state()->pixx, world_state()->pixy, 2, 2))
+                drawsquare(world_state()->bildx + tempx - world_state()->pixx, tempy % PBILDY, fragmentmap,
                            fragmentstorage + (l << 2), 2, 2);
-            else if (*(bana + (tempx >> 3) % lenx + ((tempy >> 3) % leny) * lenx) != 32)
+            else if (*(level_buffer() + (tempx >> 3) % world_state()->lenx + ((tempy >> 3) % world_state()->leny) * world_state()->lenx) != 32)
                 (*fragmentptr).life = 0;
         }
 }
@@ -695,6 +707,7 @@ void undrawfragments(void)
     uint32_t tempx, tempy;
     uint32_t crash;
     static uint8_t fragmentmap[4] = {12, 12, 12, 12};
+    uint8_t* fragmentstorage = assets_fragmentstorage();
 
     for (l = maxfragments - 1, fragmentptr = fragments + maxfragments - 1; l >= 0;
          l--, fragmentptr--)
@@ -702,18 +715,18 @@ void undrawfragments(void)
         {
             tempx = (*fragmentptr).x >> 3;
             tempy = (*fragmentptr).y >> 3;
-            if (pixx + PUSEX > (int)lenx3 && tempx < PUSEX)
-                tempx += lenx3;
-            if (pixy + PUSEY > (int)leny3 && tempy < PUSEY)
-                tempy += leny3;
-            if (insidepixel(tempx, tempy, pixx, pixy, 2, 2))
+            if (world_state()->pixx + PUSEX > (int)world_state()->lenx3 && tempx < PUSEX)
+                tempx += world_state()->lenx3;
+            if (world_state()->pixy + PUSEY > (int)world_state()->leny3 && tempy < PUSEY)
+                tempy += world_state()->leny3;
+            if (insidepixel(tempx, tempy, world_state()->pixx, world_state()->pixy, 2, 2))
             {
                 crash = testcrash(fragmentmap, fragmentstorage + (l << 2), 4, 0);
                 if (crash)
                 {
                     (*fragmentptr).life = 0;
                 }
-                undrawsquare(bildx + tempx - pixx, tempy % PBILDY, fragmentstorage + (l << 2), 2,
+                undrawsquare(world_state()->bildx + tempx - world_state()->pixx, tempy % PBILDY, fragmentstorage + (l << 2), 2,
                              2);
             }
         }
@@ -722,29 +735,31 @@ void undrawfragments(void)
 void drawpowerplantblip(void)
 {
     uint32_t tempx, tempy;
+    uint8_t* blocks = assets_blocks();
 
     tempx = ppx;
     tempy = ppy;
-    if (pblockx + BBILDX > (int)lenx && tempx < BBILDX)
-        tempx += lenx;
-    if (pblocky + BBILDY > (int)leny && tempy < BBILDY)
-        tempy += leny;
-    if (insideblock(tempx, tempy, pblockx, pblocky, 0, 0))
-        putblock(bblockx - pblockx + tempx, tempy % BBILDY,
+    if (world_state()->pblockx + BBILDX > (int)world_state()->lenx && tempx < BBILDX)
+        tempx += world_state()->lenx;
+    if (world_state()->pblocky + BBILDY > (int)world_state()->leny && tempy < BBILDY)
+        tempy += world_state()->leny;
+    if (insideblock(tempx, tempy, world_state()->pblockx, world_state()->pblocky, 0, 0))
+        putblock(world_state()->bblockx - world_state()->pblockx + tempx, tempy % BBILDY,
                  blocks + ((ppblip ? 32 : 222 - (ppcount & 0xc)) << 6));
 }
 
 void drawload(int flag)
 {
     uint32_t tempx, tempy;
+    uint8_t* blocks = assets_blocks();
 
-    tempx = loadbx;
-    tempy = loadby;
-    if (pblockx + BBILDX > (int)lenx && tempx < BBILDX)
-        tempx += lenx;
-    if (pblocky + BBILDY > (int)leny && tempy < BBILDY)
-        tempy += leny;
-    putblock(bblockx - pblockx + tempx, tempy % BBILDY, blocks + ((flag ? 109 : 32) << 6));
+    tempx = world_state()->loadbx;
+    tempy = world_state()->loadby;
+    if (world_state()->pblockx + BBILDX > (int)world_state()->lenx && tempx < BBILDX)
+        tempx += world_state()->lenx;
+    if (world_state()->pblocky + BBILDY > (int)world_state()->leny && tempy < BBILDY)
+        tempy += world_state()->leny;
+    putblock(world_state()->bblockx - world_state()->pblockx + tempx, tempy % BBILDY, blocks + ((flag ? 109 : 32) << 6));
 }
 
 uint32_t drawshuttle(void)
@@ -758,22 +773,30 @@ uint32_t drawshuttle(void)
                                   13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13,
                                   13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13,
                                   13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13};
+    game_state_t* state = state_current();
+    uint8_t shield_state = state ? state->shield : 0;
+    uint8_t* ship = assets_ship();
+    uint8_t* shieldship = assets_shieldship();
+    uint8_t* shipstorage = assets_shipstorage();
+    uint8_t* loadmap = assets_loadmap();
+    uint8_t* loadstorage = assets_loadstorage();
+    uint8_t* wirestorage = assets_wirestorage();
 
-    if (loaded || loadcontact)
+    if (world_state()->loaded || world_state()->loadcontact)
     {
-        x1 = bildx + 161 + shipdx;
-        y1 = (bildy + 89 + shipdy);
-        if (loaded)
+        x1 = world_state()->bildx + 161 + world_state()->shipdx;
+        y1 = (world_state()->bildy + 89 + world_state()->shipdy);
+        if (world_state()->loaded)
         {
-            x2 = bildx + 161 - (int)((252 - loadpoint) * cos(alpha) / 7.875);
-            y2 = bildy + 89 + (int)((252 - loadpoint) * sin(alpha) / 7.875);
+            x2 = world_state()->bildx + 161 - (int)((252 - world_state()->loadpoint) * cos(world_state()->alpha) / 7.875);
+            y2 = world_state()->bildy + 89 + (int)((252 - world_state()->loadpoint) * sin(world_state()->alpha) / 7.875);
         }
         else
         {
-            x2 = (loadbx << 3) + 3;
+            x2 = (world_state()->loadbx << 3) + 3;
             if (abs(x2 - x1) > PBILDX / 2)
                 x2 += PBILDX;
-            y2 = (loadby << 3) + 3;
+            y2 = (world_state()->loadby << 3) + 3;
         }
         lx = abs(x1 - x2) % PBILDX;
         ly = abs(y1 - y2) % PBILDY;
@@ -782,7 +805,7 @@ uint32_t drawshuttle(void)
         if (ly > 64)
             ly = abs(ly - PBILDY);
         drawline(x1, y1 % PBILDY, x2, y2 % PBILDY, 11, wirestorage);
-        tmp = testcrash(wiremap, wirestorage, max_int(lx, ly) + 1, shield);
+        tmp = testcrash(wiremap, wirestorage, max_int(lx, ly) + 1, shield_state);
 #ifdef DEBUG2
         if (tmp)
         {
@@ -799,29 +822,29 @@ uint32_t drawshuttle(void)
         crash = max_int(crash, tmp);
     }
     /* Draw the shuttle */
-    drawship(bildx + 154 + shipdx, (bildy + 82 + shipdy) % PBILDY,
-             (shield ? shieldship : ship) + (dir << 8), shipstorage);
-    tmp = testcrash(ship + (dir << 8), shipstorage, 256, shield);
+    drawship(world_state()->bildx + 154 + world_state()->shipdx, (world_state()->bildy + 82 + world_state()->shipdy) % PBILDY,
+             (shield_state ? shieldship : ship) + (world_state()->dir << 8), shipstorage);
+    tmp = testcrash(ship + (world_state()->dir << 8), shipstorage, 256, shield_state);
 #ifdef DEBUG2
     if (tmp)
         printf("Crash: Ship destroyed. By %d.\n", tmp);
 #endif
     crash = max_int(tmp, crash);
-    if (loaded || loadcontact)
+    if (world_state()->loaded || world_state()->loadcontact)
     {
-        if (loaded)
+        if (world_state()->loaded)
             drawsquare(x2 - 3, (y2 - 3) % PBILDY, loadmap, loadstorage, 8, 8);
-        else if (loadcontact)
+        else if (world_state()->loadcontact)
         {
-            x1 = loadbx << 3;
-            y1 = loadby << 3;
-            if (pixx + PBILDX > (int)lenx3 && x1 < PBILDX)
-                x1 += lenx3;
-            if (pixy + PBILDY > (int)leny3 && y1 < PBILDY)
-                y1 += leny3;
-            drawsquare(bildx - pixx + x1, y1 % PBILDY, loadmap, loadstorage, 8, 8);
+            x1 = world_state()->loadbx << 3;
+            y1 = world_state()->loadby << 3;
+            if (world_state()->pixx + PBILDX > (int)world_state()->lenx3 && x1 < PBILDX)
+                x1 += world_state()->lenx3;
+            if (world_state()->pixy + PBILDY > (int)world_state()->leny3 && y1 < PBILDY)
+                y1 += world_state()->leny3;
+            drawsquare(world_state()->bildx - world_state()->pixx + x1, y1 % PBILDY, loadmap, loadstorage, 8, 8);
         }
-        tmp = testcrash(loadmap, loadstorage, 64, shield);
+        tmp = testcrash(loadmap, loadstorage, 64, shield_state);
 #ifdef DEBUG2
         if (tmp)
             printf("Crash: Load destroyed. By %d.\n", tmp);
@@ -834,34 +857,37 @@ uint32_t drawshuttle(void)
 void undrawshuttle(void)
 {
     int x1, x2 = 0, y1, y2 = 0;
+    uint8_t* loadstorage = assets_loadstorage();
+    uint8_t* shipstorage = assets_shipstorage();
+    uint8_t* wirestorage = assets_wirestorage();
 
-    if (loaded)
+    if (world_state()->loaded)
     {
-        x2 = bildx + 161 - (int)((252 - loadpoint) * cos(alpha) / 7.875);
-        y2 = bildy + 89 + (int)((252 - loadpoint) * sin(alpha) / 7.875);
+        x2 = world_state()->bildx + 161 - (int)((252 - world_state()->loadpoint) * cos(world_state()->alpha) / 7.875);
+        y2 = world_state()->bildy + 89 + (int)((252 - world_state()->loadpoint) * sin(world_state()->alpha) / 7.875);
         undrawsquare(x2 - 3, (y2 - 3) % PBILDY, loadstorage, 8, 8);
     }
-    else if (loadcontact)
+    else if (world_state()->loadcontact)
     {
-        x1 = loadbx << 3;
-        y1 = loadby << 3;
-        if (pixx + PBILDX > (int)lenx3 && x1 < PBILDX)
-            x1 += lenx3;
-        if (pixy + PBILDY > (int)leny3 && y1 < PBILDY)
-            y1 += leny3;
-        undrawsquare(bildx - pixx + x1, y1 % PBILDY, loadstorage, 8, 8);
+        x1 = world_state()->loadbx << 3;
+        y1 = world_state()->loadby << 3;
+        if (world_state()->pixx + PBILDX > (int)world_state()->lenx3 && x1 < PBILDX)
+            x1 += world_state()->lenx3;
+        if (world_state()->pixy + PBILDY > (int)world_state()->leny3 && y1 < PBILDY)
+            y1 += world_state()->leny3;
+        undrawsquare(world_state()->bildx - world_state()->pixx + x1, y1 % PBILDY, loadstorage, 8, 8);
     }
-    undrawship(bildx + 154 + shipdx, (bildy + 82 + shipdy) % PBILDY, shipstorage);
-    if (loaded || loadcontact)
+    undrawship(world_state()->bildx + 154 + world_state()->shipdx, (world_state()->bildy + 82 + world_state()->shipdy) % PBILDY, shipstorage);
+    if (world_state()->loaded || world_state()->loadcontact)
     {
-        x1 = bildx + 161 + shipdx;
-        y1 = (bildy + 89 + shipdy);
-        if (loadcontact)
+        x1 = world_state()->bildx + 161 + world_state()->shipdx;
+        y1 = (world_state()->bildy + 89 + world_state()->shipdy);
+        if (world_state()->loadcontact)
         {
-            x2 = (loadbx << 3) + 3;
+            x2 = (world_state()->loadbx << 3) + 3;
             if (abs(x2 - x1) > PBILDX / 2)
                 x2 += PBILDX;
-            y2 = (loadby << 3) + 3;
+            y2 = (world_state()->loadby << 3) + 3;
         }
         undrawline(x1, y1 % PBILDY, x2, y2 % PBILDY, wirestorage);
     }
@@ -869,13 +895,18 @@ void undrawshuttle(void)
 
 void drawfuellines(void)
 {
-    drawsquare(bildx + shipdx + 151, (bildy + shipdy + 98) % PBILDY, fuelmap, fuelstorage, 4, 32);
-    drawsquare(bildx + shipdx + 168, (bildy + shipdy + 98) % PBILDY, fuelmap + 128,
+    uint8_t* fuelmap = assets_fuelmap();
+    uint8_t* fuelstorage = assets_fuelstorage();
+
+    drawsquare(world_state()->bildx + world_state()->shipdx + 151, (world_state()->bildy + world_state()->shipdy + 98) % PBILDY, fuelmap, fuelstorage, 4, 32);
+    drawsquare(world_state()->bildx + world_state()->shipdx + 168, (world_state()->bildy + world_state()->shipdy + 98) % PBILDY, fuelmap + 128,
                fuelstorage + 128, 4, 32);
 }
 
 void undrawfuellines(void)
 {
-    undrawsquare(bildx + shipdx + 151, (bildy + shipdy + 98) % PBILDY, fuelstorage, 4, 32);
-    undrawsquare(bildx + shipdx + 168, (bildy + shipdy + 98) % PBILDY, fuelstorage + 128, 4, 32);
+    uint8_t* fuelstorage = assets_fuelstorage();
+
+    undrawsquare(world_state()->bildx + world_state()->shipdx + 151, (world_state()->bildy + world_state()->shipdy + 98) % PBILDY, fuelstorage, 4, 32);
+    undrawsquare(world_state()->bildx + world_state()->shipdx + 168, (world_state()->bildy + world_state()->shipdy + 98) % PBILDY, fuelstorage + 128, 4, 32);
 }

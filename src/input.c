@@ -1,4 +1,5 @@
 #include <SDL.h>
+#include <stdbool.h>
 #include "input.h"
 
 typedef struct
@@ -6,15 +7,16 @@ typedef struct
     uint8_t keybits;
     SDL_Keycode last_key;
     int quit_requested;
+    input_actions_t actions;
 } input_state_t;
 
 int scancode[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-
 static input_state_t state;
 static char driver_name[] = "SDL2";
 
 static void update_keybits(void);
 static void pump_events(void);
+static void handle_key(SDL_Keycode key, int down);
 static SDL_Keycode consume_last_key(void);
 
 const char*
@@ -39,7 +41,7 @@ input_shutdown(void)
 uint8_t
 input_get_action_bits(void)
 {
-    pump_events();
+    input_frame_tick();
     return state.keybits;
 }
 
@@ -54,32 +56,31 @@ SDL_Keycode
 input_wait_key(void)
 {
     SDL_Event ev;
-    SDL_Keycode key;
-
     for (;;)
     {
-        pump_events();
-        key = consume_last_key();
-        if (key)
-            return key;
-        if (state.quit_requested)
-            return SDLK_ESCAPE;
+        if (SDL_WaitEvent(&ev) == 0)
+            continue;
 
-        if (SDL_WaitEventTimeout(&ev, 50))
+        if (ev.type == SDL_KEYDOWN)
         {
-            if (ev.type == SDL_KEYDOWN)
-            {
-                state.last_key = ev.key.keysym.sym;
-                update_keybits();
-                key = consume_last_key();
-                if (key)
-                    return key;
-            }
-            else if (ev.type == SDL_QUIT)
-            {
-                state.quit_requested = 1;
-                return SDLK_ESCAPE;
-            }
+            if (ev.key.repeat)
+                continue;
+            state.last_key = ev.key.keysym.sym;
+            handle_key(ev.key.keysym.sym, 1);
+            update_keybits();
+            return state.last_key;
+        }
+        if (ev.type == SDL_KEYUP)
+        {
+            handle_key(ev.key.keysym.sym, 0);
+            update_keybits();
+            continue;
+        }
+        if (ev.type == SDL_QUIT)
+        {
+            state.quit_requested = 1;
+            update_keybits();
+            return SDLK_ESCAPE;
         }
     }
 }
@@ -92,6 +93,25 @@ input_flush_events(void)
     state.keybits = 0;
     state.last_key = 0;
     state.quit_requested = 0;
+    state.actions = (input_actions_t){0};
+}
+
+const input_actions_t*
+input_actions(void)
+{
+    return &state.actions;
+}
+
+void
+input_frame_tick(void)
+{
+    pump_events();
+}
+
+uint8_t
+input_cached_action_bits(void)
+{
+    return state.keybits;
 }
 
 const char*
@@ -142,7 +162,7 @@ keycode(char* keyname)
 int
 getkey(void)
 {
-    pump_events();
+    input_frame_tick();
     SDL_Keycode key = consume_last_key();
     if (key)
         return (int)key;
@@ -166,7 +186,7 @@ wait_for_key(void)
 uint8_t
 getkeys(void)
 {
-    return input_get_action_bits();
+    return input_cached_action_bits();
 }
 
 uint8_t
@@ -189,29 +209,68 @@ consume_last_key(void)
     return key;
 }
 
+SDL_Keycode
+input_consume_key(void)
+{
+    return consume_last_key();
+}
+
+static void
+handle_key(SDL_Keycode key, int down)
+{
+    switch (key)
+    {
+    case SDLK_p:
+        state.actions.pause = down;
+        break;
+    case SDLK_q:
+    case SDLK_ESCAPE:
+        state.actions.escape = down;
+        break;
+    case SDLK_a:
+    case SDLK_LEFT:
+        state.actions.left = down;
+        break;
+    case SDLK_s:
+    case SDLK_RIGHT:
+        state.actions.right = down;
+        break;
+    case SDLK_LCTRL:
+    case SDLK_RCTRL:
+    case SDLK_UP:
+        state.actions.thrust = down;
+        break;
+    case SDLK_RETURN:
+        state.actions.fire = down;
+        break;
+    case SDLK_SPACE:
+        state.actions.pickup = down;
+        break;
+    default:
+        break;
+    }
+}
+
 static void
 update_keybits(void)
 {
-    const Uint8* keyboard = SDL_GetKeyboardState(NULL);
     uint8_t bits = 0;
-
-    if (keyboard[SDL_SCANCODE_P])
+    if (state.actions.pause)
         bits |= pause_bit;
-    if (keyboard[SDL_SCANCODE_Q] || keyboard[SDL_SCANCODE_ESCAPE])
+    if (state.actions.escape)
         bits |= escape_bit;
-    if (keyboard[SDL_SCANCODE_A] || keyboard[SDL_SCANCODE_LEFT])
+    if (state.actions.left)
         bits |= left_bit;
-    if (keyboard[SDL_SCANCODE_S] || keyboard[SDL_SCANCODE_RIGHT])
+    if (state.actions.right)
         bits |= right_bit;
-    if (keyboard[SDL_SCANCODE_LCTRL] || keyboard[SDL_SCANCODE_RCTRL] || keyboard[SDL_SCANCODE_UP])
+    if (state.actions.thrust)
         bits |= thrust_bit;
-    if (keyboard[SDL_SCANCODE_RETURN])
+    if (state.actions.fire)
         bits |= fire_bit;
-    if (keyboard[SDL_SCANCODE_SPACE])
+    if (state.actions.pickup)
         bits |= pickup_bit;
     if (state.quit_requested)
         bits |= escape_bit;
-
     state.keybits = bits;
 }
 
@@ -220,12 +279,17 @@ pump_events(void)
 {
     SDL_Event ev;
 
-    SDL_PumpEvents();
     while (SDL_PollEvent(&ev))
     {
         if (ev.type == SDL_KEYDOWN)
         {
-            state.last_key = ev.key.keysym.sym;
+            if (!ev.key.repeat)
+                state.last_key = ev.key.keysym.sym;
+            handle_key(ev.key.keysym.sym, 1);
+        }
+        else if (ev.type == SDL_KEYUP)
+        {
+            handle_key(ev.key.keysym.sym, 0);
         }
         else if (ev.type == SDL_QUIT)
         {

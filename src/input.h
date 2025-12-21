@@ -2,6 +2,7 @@
 #define INPUT_H
 
 #include <SDL.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 enum {
@@ -17,6 +18,21 @@ enum {
 
 extern int scancode[8];
 
+typedef struct
+{
+    bool pause;
+    bool escape;
+    bool right;
+    bool left;
+    bool fire;
+    bool pickup;
+    bool thrust;
+} input_actions_t;
+
+const input_actions_t* input_actions(void);
+void input_frame_tick(void);
+uint8_t input_cached_action_bits(void);
+
 const char* input_driver_name(void);
 int input_init(void);
 int input_shutdown(void);
@@ -24,6 +40,7 @@ uint8_t input_get_action_bits(void);
 int input_has_pending_events(void);
 SDL_Keycode input_wait_key(void);
 void input_flush_events(void);
+SDL_Keycode input_consume_key(void);
 const char* input_keyname(SDL_Keycode key);
 SDL_Keycode input_keycode(const char* name);
 

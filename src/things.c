@@ -11,6 +11,7 @@
 #include "things.h"
 #include "thrust.h"
 #include "helpers.h"
+#include "world.h"
 
 #include "soundIt.h"
 
@@ -387,12 +388,12 @@ void deletething(thing* tp)
         if (powerplant)
         {
             powerplant = 0;
-            countdown = 1000;
+            world_state()->countdown = 1000;
             for (i = 0; i < 2; i++)
                 for (j = 0; j < 2; j++)
                     writeblock(tx + i, ty + j, 32);
         }
-        if (countdown)
+        if (world_state()->countdown)
             (*tp).alive = 1;
         else
         {
@@ -462,8 +463,8 @@ void movebullets(void)
         if ((*bulletptr).life)
         {
             (*bulletptr).life--;
-            (*bulletptr).x = ((*bulletptr).x + (lenx << 6) + (*bulletptr).vx) % (lenx << 6);
-            (*bulletptr).y = ((*bulletptr).y + (leny << 6) - (*bulletptr).vy) % (leny << 6);
+            (*bulletptr).x = ((*bulletptr).x + (world_state()->lenx << 6) + (*bulletptr).vx) % (world_state()->lenx << 6);
+            (*bulletptr).y = ((*bulletptr).y + (world_state()->leny << 6) - (*bulletptr).vy) % (world_state()->leny << 6);
         }
 }
 
@@ -491,29 +492,30 @@ int inloadcontact(int x, int y)
     int res = 0;
     double angle;
     double sp, spr;
+    world_state_t* world = world_state();
 
-    dx = x - (loadbx << 3) - 2;
-    dy = (loadby << 3) - y + 2;
+    dx = x - (world->loadbx << 3) - 2;
+    dy = (world->loadby << 3) - y + 2;
     dist = dx * dx + dy * dy;
     if (dist < 1024)
     {
-        res = 1 - loadcontact;
+        res = 1 - world_load_contact();
     }
-    else if (dist >= 1024 && loadcontact)
+    else if (dist >= 1024 && world_load_contact())
     {
-        loadcontact = 0;
-        loaded = 1;
-        alpha = atan2(dy, dx);
-        angle = atan2(speedy, speedx) - alpha;
-        sp = hypot(speedx, speedy);
-        deltaalpha = sp * sin(angle) / 2 * M_PI / 262144;
-        if (deltaalpha > M_PI / 16)
-            deltaalpha = M_PI / 16;
-        if (deltaalpha < -M_PI / 16)
-            deltaalpha = -M_PI / 16;
+        world_set_load_contact(0);
+        world_set_loaded(1);
+        world->alpha = atan2(dy, dx);
+        angle = atan2(world->speedy, world->speedx) - world->alpha;
+        sp = hypot(world->speedx, world->speedy);
+        world->deltaalpha = sp * sin(angle) / 2 * M_PI / 262144;
+        if (world->deltaalpha > M_PI / 16)
+            world->deltaalpha = M_PI / 16;
+        if (world->deltaalpha < -M_PI / 16)
+            world->deltaalpha = -M_PI / 16;
         spr = sp * cos(angle);
-        speedx = (int)(spr * cos(alpha) / (1 + REL_MASS));
-        speedy = (int)(spr * sin(alpha) / (1 + REL_MASS));
+        world->speedx = (int)(spr * cos(world->alpha) / (1 + REL_MASS));
+        world->speedy = (int)(spr * sin(world->alpha) / (1 + REL_MASS));
     }
     return (res);
 }
@@ -526,10 +528,10 @@ int resonablefuel(int x, int y, int l)
     tp = &things[l];
     dx = x - (int)(*tp).x;
     dy = (int)(*tp).y - y;
-    if (dx > (int)(lenx3 >> 1))
-        dx = lenx3 - dx;
-    if (-dx > (int)(lenx3 >> 1))
-        dx = (uint32_t)(-(int)lenx3) + dx;
+    if (dx > (int)(world_state()->lenx3 >> 1))
+        dx = world_state()->lenx3 - dx;
+    if (-dx > (int)(world_state()->lenx3 >> 1))
+        dx = (uint32_t)(-(int)world_state()->lenx3) + dx;
     return (dx > -10 && dx < 9 && dy > 5 && dy < 60);
 }
 
@@ -546,8 +548,8 @@ int closestfuel(int x, int y)
         {
             dx = abs((int)x - (int)(*thingptr).x);
             dy = abs((int)y - (int)(*thingptr).y);
-            if (dx > (int)(lenx3 >> 1))
-                dx -= lenx3;
+            if (dx > (int)(world_state()->lenx3 >> 1))
+                dx -= world_state()->lenx3;
             dy *= 3;
             d = dx * dx + dy * dy;
             if (d < minimum)
@@ -573,8 +575,8 @@ int closestbutton(int x, int y)
         {
             dx = abs((int)x - (int)(*thingptr).x);
             dy = abs((int)y - (int)(*thingptr).y);
-            if (dx > (int)(lenx >> 1))
-                dx -= lenx;
+            if (dx > (int)(world_state()->lenx >> 1))
+                dx -= world_state()->lenx;
             d = dx * dx + dy * dy;
             if (d < minimum)
             {
@@ -758,30 +760,33 @@ void explodething(thing* thingptr)
 void explodeship(void)
 {
     int i;
+    world_state_t* world = world_state();
 
     for (i = 0; i < 50; i++)
     {
-        newfragment((x + ((154 + shipdx) << 3) + random() % 61) % (lenx3 << 3),
-                    (y + ((82 + shipdy) << 3) + random() % 61) % (leny3 << 3));
-        if (loaded)
+        newfragment((world->x + ((154 + world->shipdx) << 3) + random() % 61) % (world_state()->lenx3 << 3),
+                    (world->y + ((82 + world->shipdy) << 3) + random() % 61) % (world_state()->leny3 << 3));
+        if (world_is_loaded())
 #ifdef _WIN32
         {
             /* Laugh attack! Internal compiler error on MSVC 5.0 SP3!!! */
             int xtmp, ytmp;
             xtmp =
-                (x + ((161 - (int)((252 - loadpoint) * cos(alpha) / 7.875)) << 3) + random() % 61);
-            xtmp %= (lenx3 << 3);
+                (world->x + ((161 - (int)((252 - world->loadpoint) * cos(world->alpha) / 7.875)) << 3) + random() % 61);
+            xtmp %= (world_state()->lenx3 << 3);
             ytmp =
-                (y + ((89 + (int)((252 - loadpoint) * sin(alpha) / 7.875)) << 3) + random() % 61);
-            ytmp %= (leny3 << 3);
+                (world->y + ((89 + (int)((252 - world->loadpoint) * sin(world->alpha) / 7.875)) << 3) + random() % 61);
+            ytmp %= (world_state()->leny3 << 3);
             newfragment(xtmp, ytmp);
         }
 #else
             newfragment(
-                (x + ((161 - (int)((252 - loadpoint) * cos(alpha) / 7.875)) << 3) + random() % 61) %
-                    (lenx3 << 3),
-                (y + ((89 + (int)((252 - loadpoint) * sin(alpha) / 7.875)) << 3) + random() % 61) %
-                    (leny3 << 3));
+                (world->x + ((161 - (int)((252 - world->loadpoint) * cos(world->alpha) / 7.875)) << 3) +
+                     random() % 61) %
+                    (world_state()->lenx3 << 3),
+                (world->y + ((89 + (int)((252 - world->loadpoint) * sin(world->alpha) / 7.875)) << 3) +
+                     random() % 61) %
+                    (world_state()->leny3 << 3));
 #endif
     }
 }
@@ -795,8 +800,8 @@ void movefragments(void)
         if ((*fragmentptr).life > 0)
         {
             (*fragmentptr).life--;
-            (*fragmentptr).x = ((*fragmentptr).x + (lenx << 6) + (*fragmentptr).vx) % (lenx << 6);
-            (*fragmentptr).y = ((*fragmentptr).y + (leny << 6) - (*fragmentptr).vy) % (leny << 6);
+            (*fragmentptr).x = ((*fragmentptr).x + (world_state()->lenx << 6) + (*fragmentptr).vx) % (world_state()->lenx << 6);
+            (*fragmentptr).y = ((*fragmentptr).y + (world_state()->leny << 6) - (*fragmentptr).vy) % (world_state()->leny << 6);
         }
 }
 

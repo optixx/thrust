@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <getopt.h>
 #include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,6 +22,10 @@
 #include "thrust.h"
 #include "helpers.h"
 #include "menu.h"
+#include "menu_state.h"
+#include "demo_state.h"
+#include "screen_state.h"
+#include "menu_state.h"
 #include "pref.h"
 #include "game.h"
 
@@ -37,57 +42,28 @@ static const struct option thrust_longopts[] = {
 
 #include "soundIt.h"
 
-uint8_t* bulletmap;
-uint8_t* blocks;
-uint8_t* ship;
-uint8_t* shieldship;
-uint8_t* bana;
-uint8_t* fuelmap;
-uint8_t* loadmap;
-uint8_t* shipstorage;
-uint8_t* bulletstorage;
-uint8_t* fragmentstorage;
-uint8_t* fuelstorage;
-uint8_t* loadstorage;
-uint8_t* wirestorage;
+typedef enum
+{
+    MAIN_STATE_MENU,
+    MAIN_STATE_INSTRUCTIONS,
+    MAIN_STATE_PLAY,
+    MAIN_STATE_HIGH_SCORES,
+    MAIN_STATE_ABOUT,
+    MAIN_STATE_CONFIG,
+    MAIN_STATE_DEMO,
+    MAIN_STATE_QUIT
+} main_state_t;
 
-uint32_t lenx; /* x-size of level */
-uint32_t leny; /* y-size of level */
-uint32_t lenx3, leny3;
-/* Status of game. */
-double alpha, deltaalpha;
-uint32_t loaded, loadcontact, loadpointshift;
-int loadpoint;
-int countdown;
-uint32_t crash, shoot, repetetive;
-uint32_t refueling;
-int speedx, speedy;
-long absspeed, oldabs;
-int kdir, dir;
-int shipdx, shipdy;
-int x, y;             /* Top left corner, 8 units per pixel. */
-int pixx, pixy;       /* Top left corner in pixels.   */
-int pblockx, pblocky; /* Top left corner in blocks (8x8 pixels). */
-int vx, vy;           /* Speed of the ship. */
-int bildx, bildy;     /* Top left corner of backing store (in pixels). */
-int bblockx, bblocky; /* Top left corner of backing store (in blocks). */
-int loadbx, loadby;   /* Position of the load (in blocks). */
-int gravity;
-int score;
-uint8_t shield;
-uint8_t colorr, colorg, colorb;
-int nodemo = 0;
-int Thrust_Is_On = 0;
-double gamma_correction = 1.0;
-int skip_frames = 0;
+static main_state_t handle_menu_choice(options choice);
 
 int main(int argc, char** argv)
 {
-    int end = 0;
     int optc;
     int enable_smooth = 0;
+    main_state_t current_state = MAIN_STATE_MENU;
 
     window_zoom = 1;
+    world_init();
 
     fprintf(stderr, "main start\n");
 
@@ -97,7 +73,7 @@ int main(int argc, char** argv)
         switch (optc)
         {
         case 'd': /* --nodemo */
-            nodemo = 1;
+            world_set_nodemo(1);
             break;
         case 'z': /* --zoom */
         {
@@ -138,7 +114,11 @@ int main(int argc, char** argv)
         }
     } while (optc != EOF);
 
-    fprintf(stderr, "main: zoom=%d smooth=%d nodemo=%d\n", window_zoom, enable_smooth, nodemo);
+    fprintf(stderr,
+            "main: zoom=%d smooth=%d nodemo=%d\n",
+            window_zoom,
+            enable_smooth,
+            world_nodemo());
     graphics_set_smooth(enable_smooth);
 
     graphics_preinit();
@@ -153,41 +133,94 @@ int main(int argc, char** argv)
     initkeys();
 
     SDL_Delay(1000);
+    menu_state_init();
+    screen_state_init();
+    demo_state_init();
 
-    while (!end)
+    const uint32_t frame_interval = 20;
+    uint32_t frame_target = SDL_GetTicks() + frame_interval;
+
+    while (current_state != MAIN_STATE_QUIT)
     {
-        switch (menu())
+        input_frame_tick();
+        switch (current_state)
         {
-        case INST:
-            instructions();
+        case MAIN_STATE_MENU:
+            current_state = handle_menu_choice(menu_state_run());
             break;
-        case PLAY:
-            if (!(end = game(0)))
-                if (ahighscore(score))
+        case MAIN_STATE_INSTRUCTIONS:
+            screen_state_run(INST);
+            input_flush_events();
+            current_state = MAIN_STATE_MENU;
+            break;
+        case MAIN_STATE_PLAY:
+            if (game(0) != 0)
+                current_state = MAIN_STATE_QUIT;
+            else
+            {
+                if (ahighscore(game_last_score()))
                     newhighscore();
+                input_flush_events();
+                current_state = MAIN_STATE_MENU;
+            }
             break;
-        case HI:
-            showhighscores();
+        case MAIN_STATE_HIGH_SCORES:
+            screen_state_run(HI);
+            input_flush_events();
+            current_state = MAIN_STATE_MENU;
             break;
-        case ABOUT:
-            about();
+        case MAIN_STATE_ABOUT:
+            screen_state_run(ABOUT);
+            input_flush_events();
+            current_state = MAIN_STATE_MENU;
             break;
-        case CONF:
-            conf();
+        case MAIN_STATE_CONFIG:
+            screen_state_run(CONF);
+            input_flush_events();
+            current_state = MAIN_STATE_MENU;
             break;
-        case DEMO:
-            game(1);
+        case MAIN_STATE_DEMO:
+            demo_state_run();
+            input_flush_events();
+            current_state = MAIN_STATE_MENU;
             break;
-        case END:
-            end = 1;
-            break;
+        case MAIN_STATE_QUIT:
         default:
+            current_state = MAIN_STATE_QUIT;
             break;
         }
+
+        uint32_t now = SDL_GetTicks();
+        if (frame_target > now)
+            SDL_Delay(frame_target - now);
+        frame_target = now + frame_interval;
     }
 
     restoremem();
     restorehardware();
 
     return (0);
+}
+
+static main_state_t handle_menu_choice(options choice)
+{
+    switch (choice)
+    {
+    case INST:
+        return MAIN_STATE_INSTRUCTIONS;
+    case PLAY:
+        return MAIN_STATE_PLAY;
+    case HI:
+        return MAIN_STATE_HIGH_SCORES;
+    case ABOUT:
+        return MAIN_STATE_ABOUT;
+    case CONF:
+        return MAIN_STATE_CONFIG;
+    case DEMO:
+        return MAIN_STATE_DEMO;
+    case END:
+        return MAIN_STATE_QUIT;
+    default:
+        return MAIN_STATE_MENU;
+    }
 }

@@ -26,7 +26,7 @@ int getscancode(int old, int x, int y)
     printgs(x, y, str);
 
     displayscreen();
-    result = wait_for_key();
+    result = input_wait_key();
     if (!strcasecmp("Escape", keystring(result)))
         result = old;
     chcolor = 0;
@@ -71,7 +71,7 @@ void conf(void)
 
     do
     {
-        keyname = keystring(wait_for_key());
+        keyname = keystring(input_wait_key());
 
         if (!strcasecmp("Cursor Up", keyname) || !strcasecmp("Keypad Up", keyname) ||
             !strcasecmp("Up", keyname) || !strcasecmp("KP Up", keyname))

@@ -9,10 +9,23 @@
 #include "input.h"
 #include "thrust.h"
 #include "pref.h"
+#include "game.h"
+
+static int
+current_score(void)
+{
+    return game_last_score();
+}
 
 void pressanykey(void)
 {
-    wait_for_key();
+    input_flush_events();
+    while (!input_cached_action_bits())
+    {
+        input_frame_tick();
+        SDL_Delay(20);
+    }
+    flushkeyboard();
 }
 
 char*
@@ -22,7 +35,7 @@ enterhighscorename(void)
     char str[40];
 
     strcpy(name, standardname());
-    sprintf(str, "You managed %d points!", score);
+    sprintf(str, "You managed %d points!", current_score());
     gcenter(64, str);
     gcenter(75, "You made it into the highscore list!");
     gcenter(86, "Enter your name:");
@@ -81,7 +94,7 @@ void newhighscore(void)
     char* name;
 
     name = enterhighscorename();
-    inserthighscore(name, score);
+    inserthighscore(name, current_score());
     writehighscores();
     showhighscores();
 }

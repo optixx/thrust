@@ -18,6 +18,10 @@
 #include "things.h"
 #include "thrust.h"
 #include "helpers.h"
+#include "state.h"
+#include "assets.h"
+#include "world.h"
+#include "level.h"
 
 #include "soundIt.h"
 #define NUM_SAMPLES 5
@@ -32,6 +36,8 @@ Sample snd[NUM_SAMPLES];
 void turnship(void)
 {
     uint32_t i, j, k;
+    uint8_t* ship = assets_ship();
+    uint8_t* shipstorage = assets_shipstorage();
 
     for (k = 0; k < 4; k++)
         for (i = 0; i < 16; i++)
@@ -58,6 +64,8 @@ void turnship(void)
 void makeshieldedship(void)
 {
     uint32_t i, j, k;
+    uint8_t* ship = assets_ship();
+    uint8_t* shieldship = assets_shieldship();
 
     memcpy(shieldship, ship, 8192);
     for (i = 0; i < 32; i++)
@@ -87,28 +95,29 @@ int initmem(void)
     printf("Allocating memory...");
 
     bild = (uint8_t*)malloc((long)PBILDX * PBILDY * 2 + 16);
-    bana = (uint8_t*)malloc(maxlenx * maxleny);
-    ship = (uint8_t*)malloc(8192);
-    shieldship = (uint8_t*)malloc(8192);
-    shipstorage = (uint8_t*)malloc(256);
-    bulletmap = (uint8_t*)malloc(256);
-    bulletstorage = (uint8_t*)malloc(maxbullets * 16);
-    fragmentstorage = (uint8_t*)malloc(maxfragments * 4);
-    fuelmap = (uint8_t*)malloc(256);
-    fuelstorage = (uint8_t*)malloc(256);
-    loadmap = (uint8_t*)malloc(64);
-    loadstorage = (uint8_t*)malloc(64);
-    wirestorage = (uint8_t*)malloc(64);
+    uint8_t* buf = (uint8_t*)malloc(maxlenx * maxleny);
+    level_set_buffer(buf);
 
-    if (!bild || !bana || !ship || !shieldship || !shipstorage || !bulletmap || !bulletstorage ||
-        !fragmentstorage || !fuelmap || !fuelstorage || !loadmap || !loadstorage || !wirestorage)
+    if (!bild || !buf)
     {
         printf("failed!.\n");
         return (0);
     }
+
+    if (!assets_allocate())
+    {
+        printf("failed!.\n");
+        return (0);
+    }
+
     printf("done.\n");
 
-    blocks = bin_blks;
+    uint8_t* ship = assets_ship();
+    uint8_t* bulletmap = assets_bulletmap();
+    uint8_t* fuelmap = assets_fuelmap();
+    uint8_t* loadmap = assets_loadmap();
+    uint8_t* blocks = assets_blocks();
+
     memcpy(ship, bin_ship, 256 * 5);
     for (i = 0; i < 16; i++)
         memcpy(bulletmap + ((20 - i) & 15) * 16, bin_bullet + i * 16, 16);
@@ -161,99 +170,105 @@ void initscreen(int round)
     }
     else
     {
-        bin_colors[65 * 3 + 0] = GAMMA(colorr);
-        bin_colors[65 * 3 + 1] = GAMMA(colorg);
-        bin_colors[65 * 3 + 2] = GAMMA(colorb);
+        bin_colors[65 * 3 + 0] = GAMMA(world_state()->colorr);
+        bin_colors[65 * 3 + 1] = GAMMA(world_state()->colorg);
+        bin_colors[65 * 3 + 2] = GAMMA(world_state()->colorb);
     }
 
-    for (j = pblocky; j < BBILDY + pblocky; j++)
-        for (i = pblockx; i < BBILDX + pblockx; i++)
-            writeblock(i % lenx, j, *(bana + i % lenx + j * lenx));
+    for (j = world_state()->pblocky; j < BBILDY + world_state()->pblocky; j++)
+        for (i = world_state()->pblockx; i < BBILDX + world_state()->pblockx; i++)
+            writeblock(i % world_state()->lenx, j,
+                       *(level_buffer() + i % world_state()->lenx + j * world_state()->lenx));
 }
 
 void initgame(int round, int reset, int xblock, int yblock)
 {
     int i;
+    world_state_t* world = world_state();
 
-    crash = 0;
-    shoot = 0;
+    world->crash = 0;
+    world->shoot = 0;
 #ifdef DEBUG
-    repetetive = 1;
+    world->repetetive = 1;
 #else
-    repetetive = 0;
+    world->repetetive = 0;
 #endif
-    refueling = 0;
-    speedx = 0;
-    speedy = 0;
-    absspeed = 0L;
-    oldabs = 0L;
-    vx = 0;
-    vy = 0;
+    world->refueling = 0;
+    world->speedx = 0;
+    world->speedy = 0;
+    world->absspeed = 0L;
+    world->oldabs = 0L;
+    world->vx = 0;
+    world->vy = 0;
+    int gravity_setting;
     if (round & 1)
     {
-        kdir = 72;
-        dir = 24;
-        gravity = -20;
-        alpha = 3 * M_PI / 2;
-        deltaalpha = 0;
+        world->kdir = 72;
+        world->dir = 24;
+        gravity_setting = -20;
+        world->alpha = 3 * M_PI / 2;
+        world->deltaalpha = 0;
     }
     else
     {
-        kdir = 24;
-        dir = 8;
-        gravity = 20;
-        alpha = M_PI / 2;
-        deltaalpha = 0;
+        world->kdir = 24;
+        world->dir = 8;
+        gravity_setting = 20;
+        world->alpha = M_PI / 2;
+        world->deltaalpha = 0;
     }
+    game_state_t* state = state_current();
+    if (state)
+        state->gravity = gravity_setting;
     if (reset)
     {
-        loaded = 0;
-        loadcontact = 0;
-        loadpoint = 0;
-        loadpointshift = 0;
-        shipdx = 0;
-        shipdy = 0;
+        world_set_loaded(0);
+        world_set_load_contact(0);
+        world->loadpoint = 0;
+        world->loadpointshift = 0;
+        world->shipdx = 0;
+        world->shipdy = 0;
     }
     else
     {
-        loadcontact = 0;
-        if (loaded)
+        world_set_load_contact(0);
+        if (world_is_loaded())
         {
-            loadpoint = 126;
-            loadpointshift = 0;
-            shipdx = (int)(cos(alpha) * loadpoint / 5.90625);
-            shipdy = (int)(-sin(alpha) * loadpoint / 5.90625);
+            world->loadpoint = 126;
+            world->loadpointshift = 0;
+            world->shipdx = (int)(cos(world->alpha) * world->loadpoint / 5.90625);
+            world->shipdy = (int)(-sin(world->alpha) * world->loadpoint / 5.90625);
         }
         else
         {
-            loadpoint = 0;
-            loadpointshift = 0;
-            *(bana + lenx * loadby + loadbx) = 109;
-            shipdx = 0;
-            shipdy = 0;
+            world->loadpoint = 0;
+            world->loadpointshift = 0;
+            *(level_buffer() + world->lenx * world->loadby + world->loadbx) = 109;
+            world->shipdx = 0;
+            world->shipdy = 0;
         }
     }
 
-    pblockx = xblock;
-    pblocky = yblock + 4 * (round & 1);
-    if (loaded)
+    world->pblockx = xblock;
+    world->pblocky = yblock + 4 * (round & 1);
+    if (world_is_loaded())
     {
         if (round & 1)
-            pblocky -= 2;
+            world->pblocky -= 2;
         else
-            pblocky += 2;
+            world->pblocky += 2;
     }
 
-    pixx = pblockx << 3;
-    pixy = pblocky << 3;
-    x = pixx << 3;
-    y = pixy << 3;
-    bildx = (pixx + PBILDX - 4) % PBILDX + 4;
-    bildy = pixy % PBILDY;
-    bblockx = bildx >> 3;
-    bblocky = bildy >> 3;
+    world->pixx = world->pblockx << 3;
+    world->pixy = world->pblocky << 3;
+    world->x = world->pixx << 3;
+    world->y = world->pixy << 3;
+    world->bildx = (world->pixx + PBILDX - 4) % PBILDX + 4;
+    world->bildy = world->pixy % PBILDY;
+    world->bblockx = world->bildx >> 3;
+    world->bblocky = world->bildy >> 3;
 
-    countdown = 0;
+    world->countdown = 0;
 
     for (i = 0; i < maxbullets; i++)
         bullets[i].life = 0;
@@ -310,17 +325,8 @@ void restorehardware(void)
 void restoremem(void)
 {
     printf("Freeing allocated memory...");
+    assets_cleanup();
     free(bild);
-    free(bana);
-    free(bulletmap);
-    free(ship);
-    free(shieldship);
-    free(shipstorage);
-    free(fragmentstorage);
-    free(wirestorage);
-    free(fuelmap);
-    free(fuelstorage);
-    free(loadmap);
-    free(loadstorage);
+    level_release_buffer();
     printf("done.\n");
 }

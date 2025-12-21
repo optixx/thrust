@@ -5,6 +5,5 @@
 
 void instructions(void);
 void about(void);
-options menu(void);
 
 #endif /* MENU_H */

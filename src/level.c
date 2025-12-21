@@ -10,6 +10,9 @@
 #include "things.h"
 #include "thrust.h"
 #include "helpers.h"
+#include "world.h"
+
+static uint8_t* level_buffer_ptr = NULL;
 
 static unsigned manhattan_distance(uint32_t ax, uint32_t ay, uint32_t bx, uint32_t by)
 {
@@ -29,7 +32,7 @@ int matchsliders(void)
         if (!sliders[i].match && sliders[i].dir)
         {
             match = nrsliders;
-            dist = lenx;
+            dist = world_state()->lenx;
             for (j = 0; j < nrsliders; j++)
             {
                 if (!sliders[j].match && !sliders[j].dir &&
@@ -159,46 +162,47 @@ int readbana(char** ptr)
     buttondata* bdata;
 
     releasebana();
+    uint8_t* buf = level_buffer();
 
     powerplant = 0;
-    lenx = atoi(ptr[0]);
-    if (lenx % BBILDX != 0)
+    world_state()->lenx = atoi(ptr[0]);
+    if (world_state()->lenx % BBILDX != 0)
         stat = 0;
-    lenx3 = lenx << 3;
-    leny = atoi(ptr[1]);
+    world_state()->lenx3 = world_state()->lenx << 3;
+    world_state()->leny = atoi(ptr[1]);
     sx = atoi(ptr[2]);
     for (sy = 0; sy < 3; sy++)
         if (sx < 2 * BBILDY)
         {
-            sx += BBILDY - (leny % BBILDY);
-            leny += BBILDY - (leny % BBILDY);
+            sx += BBILDY - (world_state()->leny % BBILDY);
+            world_state()->leny += BBILDY - (world_state()->leny % BBILDY);
         }
-    leny3 = leny << 3;
-    if (lenx * (long)leny > (long)maxlenx * maxleny)
+    world_state()->leny3 = world_state()->leny << 3;
+    if (world_state()->lenx * (long)world_state()->leny > (long)maxlenx * maxleny)
         stat = 0;
     sy = atoi(ptr[3]);
     sz = atoi(ptr[4]);
-    x = y = lenx * (sx - 2 * BBILDY);
-    colorr = atoi(ptr[5]);
-    colorg = atoi(ptr[6]);
-    colorb = atoi(ptr[7]);
+    x = y = world_state()->lenx * (sx - 2 * BBILDY);
+    world_state()->colorr = atoi(ptr[5]);
+    world_state()->colorg = atoi(ptr[6]);
+    world_state()->colorb = atoi(ptr[7]);
     if (stat)
     {
-        memset(bana, 32, lenx * (sx + sy));
+        memset(buf, 32, world_state()->lenx * (sx + sy));
         x >>= 6;
         for (z = 0; z < BBILDY; z++)
         {
-            t1 = random() % (BBILDY * lenx);
+            t1 = random() % (BBILDY * world_state()->lenx);
             t2 = random() % 16;
-            *(bana + t1) = t2;
-            *(bana + t1 + BBILDY * lenx) = t2;
+            *(buf + t1) = t2;
+            *(buf + t1 + BBILDY * world_state()->lenx) = t2;
         }
         for (; x; x--)
-            *(bana + 2 * BBILDY * lenx + (random() % y)) = random() % 16;
-        for (y = sx + sy; y < leny - sz && stat; y++)
+            *(buf + 2 * BBILDY * world_state()->lenx + (random() % y)) = random() % 16;
+        for (y = sx + sy; y < world_state()->leny - sz && stat; y++)
         {
             temp = ptr[y - sx - sy + 8];
-            for (x = 0; x < lenx && stat; x++)
+            for (x = 0; x < world_state()->lenx && stat; x++)
             {
                 switch (temp[x])
                 {
@@ -320,16 +324,16 @@ int readbana(char** ptr)
                         stat = 0;
                     break;
                 case 'm':
-                    loadbx = x;
-                    loadby = y;
+                    world_state()->loadbx = x;
+                    world_state()->loadby = y;
                     break;
                 }
                 if (!stat)
                     printf("Unable to create a thing.\n");
             }
-            memcpy(bana + (long)y * lenx, temp, lenx);
+            memcpy(buf + (long)y * world_state()->lenx, temp, world_state()->lenx);
         }
-        memset(bana + (long)y * lenx, 112, lenx * sz);
+        memset(buf + (long)y * world_state()->lenx, 112, world_state()->lenx * sz);
     }
 
     if (stat)
@@ -337,12 +341,12 @@ int readbana(char** ptr)
         for (x = 0; x < nrthings; x++)
         {
             if (things[x].type == 7)
-                *(bana + (long)things[x].py * lenx + things[x].px - 1) = 112;
+                *(buf + (long)things[x].py * world_state()->lenx + things[x].px - 1) = 112;
             if (things[x].type == 8)
-                *(bana + (long)things[x].py * lenx + things[x].px - 1) = 32;
+                *(buf + (long)things[x].py * world_state()->lenx + things[x].px - 1) = 32;
         }
         for (x = 0; x < nrsliders; x++)
-            *(bana + (long)sliders[x].y1 * lenx + sliders[x].x1) = 112;
+            *(buf + (long)sliders[x].y1 * world_state()->lenx + sliders[x].x1) = 112;
         if (!matchsliders())
         {
             printf("Unable to match all sliders.\n");
@@ -374,4 +378,23 @@ int readbana(char** ptr)
     }
 
     return (stat);
+}
+
+uint8_t*
+level_buffer(void)
+{
+    return level_buffer_ptr;
+}
+
+void
+level_set_buffer(uint8_t* buffer)
+{
+    level_buffer_ptr = buffer;
+}
+
+void
+level_release_buffer(void)
+{
+    free(level_buffer_ptr);
+    level_buffer_ptr = NULL;
 }

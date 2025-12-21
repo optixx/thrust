@@ -3,6 +3,7 @@
 #include <SDL.h>
 #include <ctype.h>
 #include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -19,6 +20,8 @@
 #include "things.h"
 #include "thrust.h"
 #include "game.h"
+#include "state.h"
+#include "world.h"
 
 #define checkfork(b, a)                                                                            \
     case b - 1:                                                                                    \
@@ -36,70 +39,47 @@ typedef enum
 
 static char** const levels[LEVELS] = {level1, level2, level3, level4, level5, level6};
 
-static int prepare_level(int level, int round, int* lastlevel, int* gravitymsg, int* visibilitymsg,
-                         int* restartx, int* restarty, int* loadedrestart, uint32_t lives,
-                         uint32_t fuel, int score);
+static int game_last_score_value = 0;
+
+static int prepare_level(game_state_t* state);
 static game_result
-run_level_loop(int demo, int round, int* level, uint32_t* lives, int* localscore, uint32_t* fuel,
-               int* teleport, int* easyrider, int* restartx, int* restarty, int* loadedrestart,
-               uint8_t* actionbits_out);
-static void handle_post_level(int demo, int* level, int round, uint32_t* lives, int* localscore,
-                              uint32_t fuel, int actionbits, int* teleport, int* easyrider);
+run_level_loop(int demo, game_state_t* state, uint8_t* actionbits_out);
+static void handle_post_level(int demo, game_state_t* state, int actionbits);
 static void handle_pause_menu(int* easyrider_ptr);
 static void handle_escape_menu(uint32_t* endlevel_ptr, int* level_ptr);
 
 int game(int demo)
 {
     uint8_t actionbits = 0;
-    uint32_t lives;
-    uint32_t fuel;
     game_result result;
-    int localscore;
-    int level;
-    int round;
-    int lastlevel;
-    int easyrider = 0;
-    int restartx = 0;
-    int restarty = 0;
-    int loadedrestart = 0;
-    int gravitymsg = 0;
-    int visibilitymsg = 0;
-    int teleport = 0;
+    game_state_t state;
 
     if (demo)
         nextmove(1);
 
-    lives = 3;
-    localscore = 0;
-    score = 0;
-    round = 0;
-    level = 0;
-    lastlevel = -1;
-    shield = 0;
-    fuel = 1000;
+    state_init(&state);
+    state_set_current(&state);
+    world_init();
+    input_flush_events();
+    game_last_score_value = state.total_score;
 
-    while (level < LEVELS && lives > 0 && fuel)
+    while (state_can_continue(&state))
     {
-        if (prepare_level(level, round, &lastlevel, &gravitymsg, &visibilitymsg, &restartx,
-                          &restarty, &loadedrestart, lives, fuel, score) != 0)
-        {
+        if (prepare_level(&state) != 0)
             return (1);
-        }
 
-        result = run_level_loop(demo, round, &level, &lives, &localscore, &fuel, &teleport, &easyrider,
-                                &restartx, &restarty, &loadedrestart, &actionbits);
+        result = run_level_loop(demo, &state, &actionbits);
         if (result == GAME_RESULT_QUIT)
             break;
 
-        handle_post_level(demo, &level, round, &lives, &localscore, fuel, actionbits, &teleport,
-                          &easyrider);
+        handle_post_level(demo, &state, actionbits);
     }
 
     if (!demo)
     {
         chflag = 1;
         gamestatusframe();
-        gamestatus(lives, fuel, score);
+        gamestatus(state.lives, state.fuel, state.total_score);
 
         gcenter(73, "Game Over");
 
@@ -113,57 +93,57 @@ int game(int demo)
 }
 
 static int
-prepare_level(int level, int round, int* lastlevel, int* gravitymsg, int* visibilitymsg, int* restartx,
-              int* restarty, int* loadedrestart, uint32_t lives, uint32_t fuel, int score)
+prepare_level(game_state_t* state)
 {
     char textstr[40];
+    world_state_t* world = world_state();
 
     srandom(time(NULL));
-    if (level != *lastlevel || !powerplant)
+    if (state->level != state->lastlevel || !powerplant)
     {
-        if (level == 0 && *lastlevel > 0)
+        if (state->level == 0 && state->lastlevel > 0)
         {
-            *gravitymsg = 1;
-            if (round == 2)
-                *visibilitymsg = 1;
+            state->gravitymsg = 1;
+            if (state->round == 2)
+                state->visibilitymsg = 1;
         }
-        if (!readbana(levels[level]))
+        if (!readbana(levels[state->level]))
         {
-            printf("Illegal definition of level %d.\n", level + 1);
+            printf("Illegal definition of level %d.\n", state->level + 1);
             return (-1);
         }
-        *restartx = (lenx + restartpoints[0].x - (154 >> 3)) % lenx;
-        *restarty = restartpoints[0].y - (82 >> 3) - 4 * (round & 1);
-        *loadedrestart = 0;
-        initgame(round, 1, *restartx, *restarty);
+        state->restartx = (world_state()->lenx + restartpoints[0].x - (154 >> 3)) % world_state()->lenx;
+        state->restarty = restartpoints[0].y - (82 >> 3) - 4 * (state->round & 1);
+        state->loadedrestart = 0;
+        initgame(state->round, 1, state->restartx, state->restarty);
     }
     else
     {
-        loaded = *loadedrestart;
-        initgame(round, 0, *restartx, *restarty);
+        world_set_loaded(state->loadedrestart);
+        initgame(state->round, 0, state->restartx, state->restarty);
     }
 
-    initscreen(round);
-    putscr(pixx % PBILDX, pixy % PBILDY, 1);
-    *lastlevel = level;
+    initscreen(state->round);
+    putscr(world->pixx % PBILDX, world->pixy % PBILDY, 1);
+    state->lastlevel = state->level;
 
     gamestatusframe();
-    gamestatus(lives, fuel, score);
-    sprintf(textstr, "Mission %d", level + 1 + round * 6);
+        gamestatus(state->lives, state->fuel, state->total_score);
+    sprintf(textstr, "Mission %d", state->level + 1 + state->round * 6);
     gcenter(70, textstr);
-    if (*gravitymsg)
+    if (state->gravitymsg)
     {
-        gcenter(60, (round & 1) ? "Reversed gravity" : "Normal gravity");
-        if (*visibilitymsg)
-            gcenter(52, (round & 2) ? "Invisible ground" : "Visible ground");
+        gcenter(60, (state->round & 1) ? "Reversed gravity" : "Normal gravity");
+        if (state->visibilitymsg)
+            gcenter(52, (state->round & 2) ? "Invisible ground" : "Visible ground");
     }
     displayscreen();
     syncscreen();
     fade_in();
-    SDL_Delay(1000 + 2000 * (*gravitymsg));
-    *gravitymsg = 0;
+    SDL_Delay(1000 + 2000 * (state->gravitymsg));
+    state->gravitymsg = 0;
     syncscreen();
-    putscr(pixx % PBILDX, pixy % PBILDY, 1);
+    putscr(world->pixx % PBILDX, world->pixy % PBILDY, 1);
     drawteleport(1);
     displayscreen();
 
@@ -171,9 +151,7 @@ prepare_level(int level, int round, int* lastlevel, int* gravitymsg, int* visibi
 }
 
 static game_result
-run_level_loop(int demo, int round, int* level, uint32_t* lives, int* localscore, uint32_t* fuel,
-               int* teleport, int* easyrider, int* restartx, int* restarty, int* loadedrestart,
-               uint8_t* actionbits_out)
+run_level_loop(int demo, game_state_t* state, uint8_t* actionbits_out)
 {
     uint8_t actionbits = 0;
     uint32_t endlevel = 0;
@@ -185,160 +163,170 @@ run_level_loop(int demo, int round, int* level, uint32_t* lives, int* localscore
     double ay;
     restartpoint* restartxy;
     char textstr[40];
+    int* easyrider = &state->easyrider;
+    int* teleport = &state->teleport;
+    int* restartx = &state->restartx;
+    int* restarty = &state->restarty;
+    int* loadedrestart = &state->loadedrestart;
+    world_state_t* world = world_state();
 
     while (!endlevel)
     {
+        input_frame_tick();
         actionbits = demo ? nextmove(0) : whatkeys();
 
         if (alive && (actionbits & right_bit))
         {
-            decr_wrap(&kdir, 0, 96);
-            dir = kdir / 3;
+            decr_wrap(&world->kdir, 0, 96);
+            world->dir = world->kdir / 3;
         }
         if (alive && (actionbits & left_bit))
         {
-            incr_wrap(&kdir, 96, 0);
-            dir = kdir / 3;
+            incr_wrap(&world->kdir, 96, 0);
+            world->dir = world->kdir / 3;
         }
         if (alive && (actionbits & fire_bit))
         {
-            if (!shoot)
+            if (!world->shoot)
             {
-                shoot = 1;
-                newbullet((uint32_t)(x + ((160 + shipdx) << 3) + 74 * cos(dir * M_PI / 16)),
-                          (uint32_t)(y + ((88 + shipdy) << 3) - 74 * sin(dir * M_PI / 16)),
-                          (int)(speedx / 256.0 + 32 * cos(dir * M_PI / 16)),
-                          (int)(speedy / 256.0 + 32 * sin(dir * M_PI / 16)), kdir / 6, 1);
+                world->shoot = 1;
+                newbullet((uint32_t)(world->x + ((160 + world->shipdx) << 3) + 74 * cos(world->dir * M_PI / 16)),
+                          (uint32_t)(world->y + ((88 + world->shipdy) << 3) - 74 * sin(world->dir * M_PI / 16)),
+                          (int)(world->speedx / 256.0 + 32 * cos(world->dir * M_PI / 16)),
+                          (int)(world->speedy / 256.0 + 32 * sin(world->dir * M_PI / 16)), world->kdir / 6, 1);
             }
-            else if (repetetive || *easyrider)
+            else if (world->repetetive || *easyrider)
             {
-                shoot = 0;
+                world->shoot = 0;
             }
         }
         else
         {
-            shoot = 0;
+            world->shoot = 0;
         }
-        refueling = 0;
+        world->refueling = 0;
         if (alive && (actionbits & pickup_bit))
         {
-            if (*fuel > 0)
+            if (state_has_fuel(state))
             {
-                if (shield == 0 && round & 2)
+                if (state_shield(state) == 0 && (state->round & 2))
                 {
-                    bin_colors[65 * 3 + 0] = GAMMA(colorr);
-                    bin_colors[65 * 3 + 1] = GAMMA(colorg);
-                    bin_colors[65 * 3 + 2] = GAMMA(colorb);
+                    bin_colors[65 * 3 + 0] = GAMMA(world_state()->colorr);
+                    bin_colors[65 * 3 + 1] = GAMMA(world_state()->colorg);
+                    bin_colors[65 * 3 + 2] = GAMMA(world_state()->colorb);
                     fadepalette(0, 255, bin_colors, 64, 0);
                 }
-                if (shield++ == 3)
+                int shield_overflow = state_pickup_shield(state);
+                if (shield_overflow)
                 {
 #if !(defined(DEBUG) || defined(DEBUG2))
-                    if (!*easyrider)
-                        (*fuel)--;
+                    if (!state->easyrider)
+                        state_adjust_fuel(state, -1);
 #endif
-                    shield = 1;
                 }
             }
             else
             {
-                shield = 0;
+                state_reset_shield(state);
             }
-            l = closestfuel((pixx + shipdx + 160) % lenx3, (pixy + shipdy + 88) % leny3);
+            l = closestfuel((world->pixx + world->shipdx + 160) % world_state()->lenx3,
+                            (world->pixy + world->shipdy + 88) % world_state()->leny3);
             if (l >= 0)
             {
-                if (resonablefuel((pixx + shipdx + 160) % lenx3, (pixy + shipdy + 88) % leny3, l))
+                if (resonablefuel((world->pixx + world->shipdx + 160) % world_state()->lenx3,
+                                  (world->pixy + world->shipdy + 88) % world_state()->leny3, l))
                 {
 #ifndef DEBUG
-                    if (!*easyrider)
-                        (*fuel) += 6;
+                    if (!state->easyrider)
+                        state_gain_fuel(state, 6);
 #endif
-                    refueling = 1;
+                    world->refueling = 1;
                     things[l].alive--;
                     if (things[l].alive == 1)
                         things[l].score = 300;
                 }
             }
-            if (!loaded)
+            if (!world_is_loaded())
             {
-                if (inloadcontact((pixx + shipdx + 160) % lenx3, (pixy + shipdy + 88) % leny3))
+                if (inloadcontact((world->pixx + world->shipdx + 160) % world_state()->lenx3,
+                                  (world->pixy + world->shipdy + 88) % world_state()->leny3))
                 {
-                    loadcontact = 1;
-                    *(bana + lenx * loadby + loadbx) = 32;
+                    world_set_load_contact(1);
+                    *(level_buffer() + world_state()->lenx * world->loadby + world->loadbx) = 32;
                     drawload(0);
                 }
             }
         }
         else
         {
-            if (shield != 0 && round & 2)
+            if (state_shield(state) != 0 && (state->round & 2))
             {
                 bin_colors[65 * 3 + 0] = 0;
                 bin_colors[65 * 3 + 1] = 0;
                 bin_colors[65 * 3 + 2] = 0;
                 fadepalette(0, 255, bin_colors, 64, 0);
             }
-            shield = 0;
-            if (alive && loadcontact)
+            state_reset_shield(state);
+            if (alive && world_load_contact())
             {
-                *(bana + lenx * loadby + loadbx) = 109;
+                *(level_buffer() + world_state()->lenx * world->loadby + world->loadbx) = 109;
                 drawload(1);
-                loadcontact = 0;
+                world_set_load_contact(0);
             }
         }
         if (alive && (actionbits & thrust_bit))
         {
-            if (*fuel > 0)
+            if (state_has_fuel(state))
             {
-                if (Thrust_Is_On == 0)
+                if (!sound_thrust_is_on(state))
                 {
-                    Thrust_Is_On = 1;
+                    sound_set_thrust(state, 1);
                     Snd_effect(SND_THRUST, CHAN_1);
                 }
 #if !(defined(DEBUG) || defined(DEBUG2))
-                if (!*easyrider)
-                    (*fuel)--;
+                if (!state->easyrider)
+                    state_adjust_fuel(state, -1);
 #endif
-                oldabs = speedx * (long)speedx + speedy * (long)speedy;
+                world->oldabs = world->speedx * (long)world->speedx + world->speedy * (long)world->speedy;
 
-                if (loaded)
+                if (world_is_loaded())
                 { /* Ship and blob */
-                    acircum = sin(dir * M_PI / 16 - alpha);
-                    deltaalpha += SPEED / 2 * acircum * M_PI / 262144;
-                    ax = SPEED / 2 * cos(dir * M_PI / 16) / (1 + REL_MASS);
-                    ay = SPEED / 2 * sin(dir * M_PI / 16) / (1 + REL_MASS);
+                    acircum = sin(world->dir * M_PI / 16 - world->alpha);
+                    world->deltaalpha += SPEED / 2 * acircum * M_PI / 262144;
+                    ax = SPEED / 2 * cos(world->dir * M_PI / 16) / (1 + REL_MASS);
+                    ay = SPEED / 2 * sin(world->dir * M_PI / 16) / (1 + REL_MASS);
                 }
                 else
                 { /* Ship, no blob */
-                    ax = SPEED / 2 * cos(dir * M_PI / 16);
-                    ay = SPEED / 2 * sin(dir * M_PI / 16);
+                    ax = SPEED / 2 * cos(world->dir * M_PI / 16);
+                    ay = SPEED / 2 * sin(world->dir * M_PI / 16);
                 }
 
-                speedx += (int)ax;
-                speedy += (int)ay;
-                absspeed = speedx * (long)speedx + speedy * (long)speedy;
-                if (absspeed > 1000000000L && absspeed > oldabs)
+                world->speedx += (int)ax;
+                world->speedy += (int)ay;
+                world->absspeed = world->speedx * (long)world->speedx + world->speedy * (long)world->speedy;
+                if (world->absspeed > 1000000000L && world->absspeed > world->oldabs)
                 {
-                    speedx -= (int)ax;
-                    speedy -= (int)ay;
+                    world->speedx -= (int)ax;
+                    world->speedy -= (int)ay;
                 }
             }
-            else
-            {
-                if (Thrust_Is_On == 1)
-                {
-                    Snd_effect(SND_ZERO, CHAN_1);
-                    Thrust_Is_On = 0;
-                }
-            }
-        }
-        else
-        {
-            if (Thrust_Is_On == 1)
-            {
-                Snd_effect(SND_ZERO, CHAN_1);
-                Thrust_Is_On = 0;
-            }
+	            else
+	            {
+	                if (sound_thrust_is_on(state))
+	                {
+	                    Snd_effect(SND_ZERO, CHAN_1);
+	                    sound_set_thrust(state, 0);
+	                }
+	            }
+	        }
+	        else
+	        {
+	            if (sound_thrust_is_on(state))
+	            {
+	                Snd_effect(SND_ZERO, CHAN_1);
+	                sound_set_thrust(state, 0);
+	            }
         }
         if (actionbits & quit_bit)
         {
@@ -351,68 +339,68 @@ run_level_loop(int demo, int round, int* level, uint32_t* lives, int* localscore
         if (actionbits & pause_bit)
             handle_pause_menu(easyrider);
         if (actionbits & escape_bit)
-            handle_escape_menu(&endlevel, level);
+            handle_escape_menu(&endlevel, &state->level);
 
-        if (loaded)
+        if (world_is_loaded())
         {
-            if (loadpointshift)
+            if (world->loadpointshift)
             {
-                speedx += shipdx * 12;
-                speedy += shipdy * 12;
+                world->speedx += world->shipdx * 12;
+                world->speedy += world->shipdy * 12;
             }
-            alpha += deltaalpha;
-            if (alpha > 2 * M_PI)
-                alpha -= 2 * M_PI;
-            if (alpha < 0)
-                alpha += 2 * M_PI;
-            loadpointshift = 0;
-            if (++loadpoint > 126)
-                loadpoint = 126;
+            world->alpha += world->deltaalpha;
+            if (world->alpha > 2 * M_PI)
+                world->alpha -= 2 * M_PI;
+            if (world->alpha < 0)
+                world->alpha += 2 * M_PI;
+            world->loadpointshift = 0;
+            if (++world->loadpoint > 126)
+                world->loadpoint = 126;
             else
-                loadpointshift = 1;
-            shipdx = (int)(cos(alpha) * loadpoint / 5.90625);
-            shipdy = (int)(-sin(alpha) * loadpoint / 5.90625);
-            if (loadpointshift)
+                world->loadpointshift = 1;
+            world->shipdx = (int)(cos(world->alpha) * world->loadpoint / 5.90625);
+            world->shipdy = (int)(-sin(world->alpha) * world->loadpoint / 5.90625);
+            if (world->loadpointshift)
             {
-                speedx -= shipdx * 12;
-                speedy -= shipdy * 12;
+                world->speedx -= world->shipdx * 12;
+                world->speedy -= world->shipdy * 12;
             }
-            deltaalpha -= deltaalpha / 1024;
+            world->deltaalpha -= world->deltaalpha / 1024;
         }
         else
         {
-            shipdx = shipdy = 0;
+            world->shipdx = world->shipdy = 0;
         }
         /* Gravity and Aerodynamics */
-        if (speedx > 0)
-            speedx = speedx - (speedx >> 9) - 1;
-        else if (speedx < 0)
-            speedx = speedx - (speedx >> 9) + 1;
+        if (world->speedx > 0)
+            world->speedx = world->speedx - (world->speedx >> 9) - 1;
+        else if (world->speedx < 0)
+            world->speedx = world->speedx - (world->speedx >> 9) + 1;
         if (alive)
         {
-            if (gravity >= 0)
-                speedy -= (SPEED * gravity + 1) >> 8;
+            if (state->gravity >= 0)
+                world->speedy -= (SPEED * state->gravity + 1) >> 8;
             else
-                speedy -= (SPEED * gravity >> 8) + 1;
-            if (speedy > 0)
-                speedy--;
-            else if (speedy < 0)
-                speedy++;
+                world->speedy -= (SPEED * state->gravity >> 8) + 1;
+            if (world->speedy > 0)
+                world->speedy--;
+            else if (world->speedy < 0)
+                world->speedy++;
             /* Move the Ship */
-            speedx = (speedx < 16384) ? speedx : 16384;
-            speedx = (speedx > -16384) ? speedx : -16384;
-            speedy = (speedy < 16384) ? speedy : 16384;
-            speedy = (speedy > -16384) ? speedy : -16384;
-            if (speedx >= 0)
-                vx = (speedx + 1) >> 8;
+            world->speedx = (world->speedx < 16384) ? world->speedx : 16384;
+            world->speedx = (world->speedx > -16384) ? world->speedx : -16384;
+            world->speedy = (world->speedy < 16384) ? world->speedy : 16384;
+            world->speedy = (world->speedy > -16384) ? world->speedy : -16384;
+            if (world->speedx >= 0)
+                world->vx = (world->speedx + 1) >> 8;
             else
-                vx = (speedx >> 8) + 1;
-            if (speedy >= 0)
-                vy = (speedy + 1) >> 8;
+                world->vx = (world->speedx >> 8) + 1;
+            if (world->speedy >= 0)
+                world->vy = (world->speedy + 1) >> 8;
             else
-                vy = (speedy >> 8) + 1;
-            x = (x + vx + (lenx << 6)) % (lenx << 6);
-            y = (y - vy + (leny << 6)) % (leny << 6);
+                world->vy = (world->speedy >> 8) + 1;
+            world->x = (world->x + world->vx + (world_state()->lenx << 6)) % (world_state()->lenx << 6);
+            world->y = (world->y - world->vy + (world_state()->leny << 6)) % (world_state()->leny << 6);
         }
 
         /* Bunkerfire */
@@ -420,7 +408,7 @@ run_level_loop(int demo, int round, int* level, uint32_t* lives, int* localscore
             bunkerfirebullets();
         movebullets();
         movefragments();
-        drawfuel(*fuel);
+        drawfuel(state_fuel(state));
 
         /* Move the Power Plant blip */
         ppcount = (ppcount + 1) & 15;
@@ -429,15 +417,15 @@ run_level_loop(int demo, int round, int* level, uint32_t* lives, int* localscore
 
         if (!powerplant)
         {
-            countdown--;
-            if (countdown < 0)
+            world->countdown--;
+            if (world->countdown < 0)
             {
 #ifndef DEBUG
                 if (alive && !*easyrider)
                 {
                     dying = 1;
 #ifdef DEBUG2
-                    printf("Dying: Power Plant countdown.\n");
+                    printf("Dying: Power Plant world->countdown.\n");
 #endif
                 }
 #endif
@@ -445,7 +433,7 @@ run_level_loop(int demo, int round, int* level, uint32_t* lives, int* localscore
             else
             {
                 chflag = 1;
-                sprintf(textstr, "%d  ", (countdown + 99) / 100);
+                sprintf(textstr, "%d  ", (world->countdown + 99) / 100);
                 printgs(105, 12, textstr);
                 printgs(205, 12, textstr);
                 chflag = 0;
@@ -453,52 +441,45 @@ run_level_loop(int demo, int round, int* level, uint32_t* lives, int* localscore
         }
 
         /* Precalculate some values */
-        pixx = x >> 3;
-        pixy = y >> 3;
-        bildx = (pixx + PBILDX - 4) % PBILDX + 4;
-        bildy = pixy % PBILDY;
-        pblockx = pixx >> 3;
-        pblocky = pixy >> 3;
-        bblockx = bildx >> 3;
-        bblocky = bildy >> 3;
+        world_sync_blocks();
 
-        if (pblocky > (int)leny - 3)
+        if (world->pblocky > (int)world_state()->leny - 3)
         {
             endlevel = 1;
 #ifdef DEBUG2
             printf("Endlevel: Finished level.\n");
 #endif
             *teleport = 1;
-            y = 0;
-            pixy = 0;
-            pblocky = 0;
+            world->y = 0;
+            world->pixy = 0;
+            world->pblocky = 0;
         }
 
         /* Check if at a restart barrier. If so, update the restart point. */
-        restartxy = atbarrier((pblockx + ((154 + shipdx) >> 3)) % lenx, pblocky + ((82 + shipdy) >> 3));
+        restartxy = atbarrier((world->pblockx + ((154 + world->shipdx) >> 3)) % world_state()->lenx, world->pblocky + ((82 + world->shipdy) >> 3));
         if (restartxy)
         {
-            *restartx = (lenx + restartxy->x - (154 >> 3)) % lenx;
+            *restartx = (world_state()->lenx + restartxy->x - (154 >> 3)) % world_state()->lenx;
             *restarty = restartxy->y - (82 >> 3);
-            *loadedrestart = loaded;
         }
+        *loadedrestart = world_is_loaded();
 
         /* Scroll the screen */
-        updateborder(pblockx, pblocky, bblockx, bblocky, vx, vy);
+        updateborder(world->pblockx, world->pblocky, world->bblockx, world->bblocky, world->vx, world->vy);
 
         drawpowerplantblip();
         drawbullets();
         if (alive)
-            crash = drawshuttle();
+            world->crash = drawshuttle();
         drawfragments();
-        if (alive && refueling)
+        if (alive && world->refueling)
             drawfuellines();
         /* Check if end of life. */
 #ifndef DEBUG
         if (!*easyrider)
-            if (alive && crash)
+            if (alive && world->crash)
             {
-                (*lives)--;
+                state->lives--;
                 dying = 1;
 #ifdef DEBUG2
                 printf("Dying: Crashing.\n");
@@ -509,11 +490,11 @@ run_level_loop(int demo, int round, int* level, uint32_t* lives, int* localscore
         /* Screendump */
 
         syncscreen();
-        putscr(bildx, bildy, 0);
+        putscr(world->bildx, world->bildy, 0);
         displayscreen();
 
         /* Remove moveable objects from screen in reverse order. */
-        if (alive && refueling)
+        if (alive && world->refueling)
             undrawfuellines();
         undrawfragments();
         if (alive)
@@ -522,35 +503,33 @@ run_level_loop(int demo, int round, int* level, uint32_t* lives, int* localscore
 
         /* Remove objects */
         if (!*easyrider)
-            *localscore += killdyingthings();
+            state_add_local_score(state, killdyingthings());
         else
             killdyingthings();
         if (dying)
-        {
-            alive = 0;
-            dying = 0;
-            Snd_effect(SND_ZERO, CHAN_1);
-            Thrust_Is_On = 0;
-            Snd_effect(SND_BOOM2, CHAN_2);
-            explodeship();
-        }
+            {
+                alive = 0;
+                dying = 0;
+                Snd_effect(SND_ZERO, CHAN_1);
+                sound_set_thrust(state, 0);
+                Snd_effect(SND_BOOM2, CHAN_2);
+                explodeship();
+            }
         if (!alive && !livefragments())
         {
             Snd_effect(SND_ZERO, CHAN_1);
-            Thrust_Is_On = 0;
+            sound_set_thrust(state, 0);
             endlevel = 1;
 #ifdef DEBUG2
             printf("Endlevel: Shit crashed.\n");
 #endif
         }
         animatesliders();
-        if (*localscore > score)
+        if (state_update_total_score(state))
         {
+            game_last_score_value = state->total_score;
             chflag = 1;
-            if (*localscore / 10000 > score / 10000)
-                (*lives)++;
-            score = *localscore;
-            gamestatus(*lives, *fuel, score);
+            gamestatus(state->lives, state->fuel, state->total_score);
             chflag = 0;
         }
     }
@@ -560,17 +539,18 @@ run_level_loop(int demo, int round, int* level, uint32_t* lives, int* localscore
 }
 
 static void
-handle_post_level(int demo, int* level, int round, uint32_t* lives, int* localscore, uint32_t fuel,
-                  int actionbits, int* teleport, int* easyrider)
+handle_post_level(int demo, game_state_t* state, int actionbits)
 {
     char textstr[40];
 
-    if (*teleport)
+    game_last_score_value = state->total_score;
+
+    if (state->teleport)
     {
         Snd_effect(SND_ZERO, CHAN_1);
-        bin_colors[65 * 3 + 0] = GAMMA(colorr);
-        bin_colors[65 * 3 + 1] = GAMMA(colorg);
-        bin_colors[65 * 3 + 2] = GAMMA(colorb);
+        bin_colors[65 * 3 + 0] = GAMMA(world_state()->colorr);
+        bin_colors[65 * 3 + 1] = GAMMA(world_state()->colorg);
+        bin_colors[65 * 3 + 2] = GAMMA(world_state()->colorb);
         fadepalette(0, 255, bin_colors, 64, 1);
         drawteleport(0);
     }
@@ -581,11 +561,11 @@ handle_post_level(int demo, int* level, int round, uint32_t* lives, int* localsc
 
     if (!demo && !(actionbits & (quit_bit | escape_bit)))
     {
-        if (*teleport || !powerplant)
+        if (state->teleport || !powerplant)
         {
             chflag = 1;
             gamestatusframe();
-            gamestatus(*lives, fuel, score);
+            gamestatus(state->lives, state->fuel, state->total_score);
 
             if (!powerplant)
             {
@@ -593,18 +573,18 @@ handle_post_level(int demo, int* level, int round, uint32_t* lives, int* localsc
                 gcenter(61, textstr);
             }
 
-            if (*teleport && loaded)
-                sprintf(textstr, "Mission %d complete", *level + 1 + round * 6);
+            if (state->teleport && world_is_loaded())
+                sprintf(textstr, "Mission %d complete", state->level + 1 + state->round * 6);
             else if (powerplant)
                 sprintf(textstr, "Mission incomplete");
             else
-                sprintf(textstr, "Misson  %d  failed", *level + 1 + round * 6);
-            gcenter(73 - 6 * (*teleport && loaded && powerplant), textstr);
+                sprintf(textstr, "Misson  %d  failed", state->level + 1 + state->round * 6);
+            gcenter(73 - 6 * (state->teleport && world_is_loaded() && powerplant), textstr);
 
-            if ((*teleport && loaded) || !powerplant)
+            if ((state->teleport && world_is_loaded()) || !powerplant)
             {
-                if (*teleport && loaded)
-                    sprintf(textstr, "Bonus %d", 4000 + 400 * (*level) - 2000 * powerplant);
+                if (state->teleport && world_is_loaded())
+                    sprintf(textstr, "Bonus %d", 4000 + 400 * (state->level) - 2000 * powerplant);
                 else
                     sprintf(textstr, "No bonus");
                 gcenter(85 - 6 * (!!powerplant), textstr);
@@ -613,30 +593,31 @@ handle_post_level(int demo, int* level, int round, uint32_t* lives, int* localsc
             displayscreen();
             fade_in();
             SDL_Delay(2000);
-            if (!*easyrider && *teleport && loaded)
-                *localscore += 4000 + 400 * (*level) - 2000 * powerplant;
-            if ((*teleport && loaded) || !powerplant)
+            if (!state->easyrider && state->teleport && world_is_loaded())
+                state_add_local_score(state, 4000 + 400 * (state->level) - 2000 * powerplant);
+            if ((state->teleport && world_is_loaded()) || !powerplant)
             {
-                if (++(*level) == LEVELS)
+                if (++(state->level) == LEVELS)
                 {
-                    *level = 0;
-                    round = (round + 1) % 4;
+                    state->level = 0;
+                    state->round = (state->round + 1) % 4;
                 }
             }
-            if (*localscore / 10000 > score / 10000)
-                (*lives)++;
-            score = *localscore;
-            gamestatus(*lives, fuel, score);
+            if (state_update_total_score(state))
+            {
+                game_last_score_value = state->total_score;
+                gamestatus(state->lives, state->fuel, state->total_score);
+            }
             chflag = 0;
             displayscreen();
             SDL_Delay(2000);
             fade_out();
         }
     }
-    *teleport = 0;
+    state->teleport = 0;
 
     if (demo)
-        *level = LEVELS;
+        state->level = LEVELS;
 }
 
 static void
@@ -646,7 +627,7 @@ handle_pause_menu(int* easyrider_ptr)
     options end = NOTHING;
     int easyrider = *easyrider_ptr;
 
-    Thrust_Is_On = 0;
+    sound_set_thrust(state_current(), 0);
     Snd_effect(SND_ZERO, CHAN_1);
     pause_message();
     flushkeyboard();
@@ -691,7 +672,7 @@ handle_escape_menu(uint32_t* endlevel_ptr, int* level_ptr)
     int ch;
     options end = NOTHING;
 
-    Thrust_Is_On = 0;
+    sound_set_thrust(state_current(), 0);
     Snd_effect(SND_ZERO, CHAN_1);
     escape_message();
     flushkeyboard();
@@ -711,4 +692,9 @@ handle_escape_menu(uint32_t* endlevel_ptr, int* level_ptr)
             break;
         }
     }
+}
+
+int game_last_score(void)
+{
+    return game_last_score_value;
 }
