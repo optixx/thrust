@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="480" src="thrust.png" alt="Launch screen capture"/>
+  <img width="480" src="images/thrust.png" alt="Launch screen capture"/>
 </p>
 
 Thrust
