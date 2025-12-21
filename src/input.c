@@ -1,4 +1,7 @@
 #include <SDL.h>
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 #include <stdbool.h>
 #include "input.h"
 
@@ -55,6 +58,18 @@ input_has_pending_events(void)
 SDL_Keycode
 input_wait_key(void)
 {
+#ifdef __EMSCRIPTEN__
+    for (;;)
+    {
+        input_frame_tick();
+        SDL_Keycode key = consume_last_key();
+        if (key)
+            return key;
+        if (state.quit_requested)
+            return SDLK_ESCAPE;
+        emscripten_sleep(10);
+    }
+#else
     SDL_Event ev;
     for (;;)
     {
@@ -83,6 +98,7 @@ input_wait_key(void)
             return SDLK_ESCAPE;
         }
     }
+#endif
 }
 
 void

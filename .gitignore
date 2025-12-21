@@ -8,6 +8,12 @@ sdlthrust
 # Asset intermediate files
 assets/*.bin
 
+# macOS cruft
+.DS_Store
+
+# wasm artifacts
+wasm-dist/
+
 # Build metadata
 .depend
 build-stamp

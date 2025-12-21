@@ -4,6 +4,7 @@ SHELL        = /bin/sh
 CC ?= gcc
 SDLCONFIG ?= sdl2-config
 PYTHON ?= python3
+PYTHON3_14 := $(shell command -v python3.14 2>/dev/null)
 ASSET_TOOL := $(PYTHON) helpers/asset_tool.py
 SDL_CFLAGS := $(shell $(SDLCONFIG) --cflags 2>/dev/null)
 SDL_LIBS := $(shell $(SDLCONFIG) --libs 2>/dev/null)
@@ -42,6 +43,22 @@ HELP_CFLAGS  = $(CFLAGS)
 LDFLAGS      =
 LIBS         = -lm
 
+EMCC ?= emcc
+EMFLAGS ?= -O3 -sUSE_SDL=2 -sALLOW_MEMORY_GROWTH=1 -sASSERTIONS=1 -sEXIT_RUNTIME=1 -sWASM=1 -sASYNCIFY $(DEFINES)
+EMSDK_PYTHON ?= $(if $(PYTHON3_14),$(PYTHON3_14),python3)
+EM_PYTHON ?= $(EMSDK_PYTHON)
+WASM_EMCC := EMSDK_PYTHON=$(EMSDK_PYTHON) $(EMCC)
+WASM_OUTPUT_DIR := wasm-dist
+WASM_JS := $(WASM_OUTPUT_DIR)/sdlthrust.js
+WASM_HTML := $(WASM_OUTPUT_DIR)/index.html
+WASM_SRC := src/thrust.c src/main_loop.c src/game.c src/state.c src/menu.c src/menu_state.c src/demo_state.c \
+            src/screen_state.c src/pref.c src/hud.c src/hiscore.c src/conf.c src/things.c \
+            src/init.c src/level.c src/font5x5.c src/graphics.c src/assets.c src/world.c \
+            src/input.c src/soundIt.c src/SDL.c assets/font.c assets/boom.c assets/boom2.c \
+            assets/harp.c assets/thrust.c assets/zero.c
+WASM_RC := $(WASM_OUTPUT_DIR)/thrust.rc
+WASM_DEPS := $(WASM_SRC) $(ASSET_CS)
+
 SOURCEOBJS   = $(addprefix $(SRC_OBJ_DIR)/, \
                  thrust.o game.o state.o menu.o menu_state.o demo_state.o screen_state.o main_loop.o pref.o hud.o hiscore.o conf.o things.o init.o \
                  level.o font5x5.o graphics.o assets.o world.o )
@@ -56,12 +73,10 @@ OBJS         = $(SOURCEOBJS) $(DATAOBJS) $(SOUNDITOBJS) $(SOUNDOBJS)
 SDL_OBJS     = $(addprefix $(SRC_OBJ_DIR)/, input.o SDL.o )
 ASSET_CS     = $(DATASEC)
 
-.PHONY: all clean assets
-
 all: sdlthrust
 
 clean:
-	rm -rf $(strip *~ core sdlthrust $(OBJS) $(SDL_OBJS) assets/*.bin .depend build)
+	rm -rf $(strip *~ core sdlthrust $(OBJS) $(SDL_OBJS) assets/*.bin .depend build) $(WASM_OUTPUT_DIR)
 	rm -f build-stamp
 
 format:
@@ -110,6 +125,27 @@ $(foreach pal,$(PAL_FILES),$(eval $(call PAL_TO_BIN_RULE,$(pal))))
 
 %.c: %.snd
 	$(ASSET_TOOL) sound2c sound_$(notdir $(basename $<)) $< > $@
+
+PORT ?= 8000
+
+.PHONY: all clean assets wasm serve-wasm wasm-build
+wasm: wasm-build
+wasm-build: $(WASM_JS) $(WASM_HTML) $(WASM_RC)
+
+$(WASM_OUTPUT_DIR):
+	mkdir -p $(WASM_OUTPUT_DIR)
+
+$(WASM_JS): $(WASM_DEPS) | $(WASM_OUTPUT_DIR)
+	$(WASM_EMCC) $(EMFLAGS) $(WASM_SRC) $(ASSET_CS) -o $@
+
+serve-wasm:
+	$(PYTHON) helpers/serve_wasm.py --directory $(WASM_OUTPUT_DIR) --port $(PORT)
+
+$(WASM_HTML): wasm/index.html | $(WASM_OUTPUT_DIR)
+	cp $< $@
+
+$(WASM_RC): thrust.rc | $(WASM_OUTPUT_DIR)
+	cp $< $@
 
 ifeq (.depend,$(wildcard .depend))
 include .depend
